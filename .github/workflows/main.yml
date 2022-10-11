@@ -14,7 +14,9 @@ jobs:
           go-version: 1.19.x
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          # https://github.com/reproducible-containers/repro-get/issues/3
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
       - run: go test -covermode=atomic -race -v ./...
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3.2.0
@@ -22,3 +24,7 @@ jobs:
           version: v1.50.0
           args: --verbose
       - run: make integration
+      - run: make && sudo make install
+      - name: Smoke testing of 'repro-get dockerfile generate'
+        run: repro-get --distro=debian dockerfile generate . debian:bullseye-20211220 gcc build-essential
+        # TODO: run the examples with a fast, stable, and persistent file provider
