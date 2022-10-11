@@ -157,10 +157,7 @@ The following example produces an image with `gcc`, using the packages from 2021
 # Generate "Dockerfile.generate-hash" and "Dockerfile" in the current directory
 repro-get --distro=debian dockerfile generate . debian:bullseye-20211220 gcc build-essential
 
-# Copy the repro-get binary into the current directory
-cp $(command -v repro-get) ./repro-get.linux-amd64
-
-# Enable BuildKit
+ Enable BuildKit
 export DOCKER_BUILDKIT=1
 
 # Generate "SHA256SUMS-amd64" file in the current directory (needed by the next step)
@@ -168,9 +165,6 @@ docker build --output . -f Dockerfile.generate-hash .
 
 # Build the image
 docker build .
-
-# Clean up
-rm -f repro-get.linux-amd64
 ```
 
 See [`./examples/gcc`](./examples/gcc) for an example output.

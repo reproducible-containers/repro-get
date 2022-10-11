@@ -6,7 +6,6 @@
 
 # Usage:
 # ----------------------------------------------------------
-# cp $(command -v repro-get) ./repro-get.linux-{{.OCIArchDashVariant}}
 # export DOCKER_BUILDKIT=1
 # docker build --output . -f Dockerfile.generate-hash .
 # ----------------------------------------------------------
@@ -17,17 +16,19 @@
 ARG BASE_IMAGE={{.BaseImage}} # {{.BaseImageOrig}}
 ARG PACKAGES="{{join .Packages " "}}"
 ARG SNAPSHOT_ARCHIVE_BASE=http://snapshot.debian.org/archive/
+# Backports do not seem cached in https://debian.notset.fr/
+ARG BACKPORTS=0
 
-FROM scratch AS repro-get
-ARG TARGETARCH
-ARG TARGETVARIANT
-COPY repro-get.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}} /
+ARG REPRO_GET_VERSION={{.ReproGetVersion}}
+ARG REPRO_GET_SHA256SUMS_SHA256SUM={{.ReproGetSHASHA}}
+{{snippet "fetch-repro-get"}}
 
 FROM --platform=${TARGETPLATFORM} ${BASE_IMAGE} AS generate-hash
 ARG PACKAGES
 ARG SNAPSHOT_ARCHIVE_BASE
 ARG TARGETARCH
 ARG TARGETVARIANT
+ARG BACKPORTS
 SHELL ["/bin/bash", "-c"]
 RUN \
   --mount=type=cache,target=/var/cache/apt \
@@ -42,7 +43,7 @@ RUN \
   echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME} main" >/etc/apt/sources.list && \
   echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian-security/${snapshot} ${VERSION_CODENAME}-security main" >>/etc/apt/sources.list && \
   echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME}-updates main" >>/etc/apt/sources.list && \
-  echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME}-backports main" >>/etc/apt/sources.list && \
+  if [ "${BACKPORTS}" = 1 ] ; then echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME}-backports main" >>/etc/apt/sources.list; fi&& \
   rm -f /etc/apt/apt.conf.d/docker-clean && \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache && \
   apt-get update && \
