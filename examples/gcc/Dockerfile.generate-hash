@@ -16,6 +16,8 @@
 ARG BASE_IMAGE=docker.io/library/debian:bullseye-20211220@sha256:2906804d2a64e8a13a434a1a127fe3f6a28bf7cf3696be4223b06276f32f1f2d # debian:bullseye-20211220
 ARG PACKAGES="gcc build-essential"
 ARG SNAPSHOT_ARCHIVE_BASE=http://snapshot.debian.org/archive/
+# Backports do not seem cached in https://debian.notset.fr/
+ARG BACKPORTS=0
 
 ARG REPRO_GET_VERSION=v0.1.0
 ARG REPRO_GET_SHA256SUMS_SHA256SUM=a23ee0e0a2a2e940809b968befc84aa928323c86d3f4eef1f1653c96c2861632
@@ -53,6 +55,7 @@ ARG PACKAGES
 ARG SNAPSHOT_ARCHIVE_BASE
 ARG TARGETARCH
 ARG TARGETVARIANT
+ARG BACKPORTS
 SHELL ["/bin/bash", "-c"]
 RUN \
   --mount=type=cache,target=/var/cache/apt \
@@ -67,7 +70,7 @@ RUN \
   echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME} main" >/etc/apt/sources.list && \
   echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian-security/${snapshot} ${VERSION_CODENAME}-security main" >>/etc/apt/sources.list && \
   echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME}-updates main" >>/etc/apt/sources.list && \
-  echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME}-backports main" >>/etc/apt/sources.list && \
+  if [ "${BACKPORTS}" = 1 ] ; then echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME}-backports main" >>/etc/apt/sources.list; fi&& \
   rm -f /etc/apt/apt.conf.d/docker-clean && \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache && \
   apt-get update && \
