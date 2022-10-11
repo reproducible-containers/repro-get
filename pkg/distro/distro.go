@@ -3,12 +3,13 @@ package distro
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"fmt"
-	"html/template"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/reproducible-containers/repro-get/pkg/cache"
 	"github.com/reproducible-containers/repro-get/pkg/filespec"
@@ -63,10 +64,23 @@ type DockerfileTemplateArgs struct {
 	Packages           []string
 	OCIArchDashVariant string
 	Providers          []string
+
+	ReproGetVersion string // e.g., "v0.1.0"
+	ReproGetSHASHA  string // sha256sum of SHA256SUMS, e.g., "a23ee0e0a2a2e940809b968befc84aa928323c86d3f4eef1f1653c96c2861632" for https://github.com/reproducible-containers/repro-get/releases/download/v0.1.0/SHA256SUMS
 }
+
+//go:embed distroutil/dockerfilesnippets/Dockerfile.fetch-repro-get.snippet
+var dockerfileFetchReproGetSnippet string
 
 var DockerfileTemplateFuncMap = template.FuncMap{
 	"join": strings.Join,
+	"snippet": func(name string) (string, error) {
+		switch name {
+		case "fetch-repro-get":
+			return dockerfileFetchReproGetSnippet, nil
+		}
+		return "", fmt.Errorf("unknown snippet name %q", name)
+	},
 }
 
 func (a *DockerfileTemplateArgs) WriteToFile(f, tmpl string) error {

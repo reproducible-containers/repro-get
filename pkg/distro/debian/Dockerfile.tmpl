@@ -7,7 +7,6 @@
 # Usage:
 # Make sure that the hash file "SHA256SUMS-{{.OCIArchDashVariant}}" is present in the current directory.
 # ----------------------------------------------------------
-# cp $(command -v repro-get) ./repro-get.linux-{{.OCIArchDashVariant}}
 # export DOCKER_BUILDKIT=1
 # docker build .
 # ----------------------------------------------------------
@@ -15,10 +14,9 @@
 ARG BASE_IMAGE={{.BaseImage}} # {{.BaseImageOrig}}
 ARG REPRO_GET_PROVIDER={{join .Providers ","}}
 
-FROM scratch AS repro-get
-ARG TARGETARCH
-ARG TARGETVARIANT
-COPY repro-get.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}} /
+ARG REPRO_GET_VERSION={{.ReproGetVersion}}
+ARG REPRO_GET_SHA256SUMS_SHA256SUM={{.ReproGetSHASHA}}
+{{snippet "fetch-repro-get"}}
 
 FROM --platform=${TARGETPLATFORM} ${BASE_IMAGE}
 ARG TARGETARCH

@@ -7,7 +7,6 @@
 # Usage:
 # Make sure that the hash file "SHA256SUMS-amd64" is present in the current directory.
 # ----------------------------------------------------------
-# cp $(command -v repro-get) ./repro-get.linux-amd64
 # export DOCKER_BUILDKIT=1
 # docker build .
 # ----------------------------------------------------------
@@ -15,10 +14,36 @@
 ARG BASE_IMAGE=docker.io/library/debian:bullseye-20211220@sha256:2906804d2a64e8a13a434a1a127fe3f6a28bf7cf3696be4223b06276f32f1f2d # debian:bullseye-20211220
 ARG REPRO_GET_PROVIDER=http://deb.debian.org/debian/{{.Name}},http://deb.debian.org/debian-security/{{.Name}},http://debian.notset.fr/snapshot/by-hash/SHA256/{{.SHA256}}
 
-FROM scratch AS repro-get
+ARG REPRO_GET_VERSION=v0.1.0
+ARG REPRO_GET_SHA256SUMS_SHA256SUM=a23ee0e0a2a2e940809b968befc84aa928323c86d3f4eef1f1653c96c2861632
+# "download" or "local"
+ARG REPRO_GET_FETCH_MODE=download
+ARG REPRO_GET_BINARY_URL=https://github.com/reproducible-containers/repro-get/releases/download/${REPRO_GET_VERSION}/repro-get-${REPRO_GET_VERSION}.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}
+ARG REPRO_GET_SHA256SUMS_URL=https://github.com/reproducible-containers/repro-get/releases/download/${REPRO_GET_VERSION}/SHA256SUMS
+
+FROM --platform=${TARGETPLATFORM} ${BASE_IMAGE} AS repro-get-download
+ARG TARGETARCH
+ARG TARGETVARIANT
+ARG REPRO_GET_VERSION
+ARG REPRO_GET_BINARY_URL
+ARG REPRO_GET_SHA256SUMS_URL
+ARG REPRO_GET_SHA256SUMS_SHA256SUM
+ADD ${REPRO_GET_BINARY_URL} .
+ADD ${REPRO_GET_SHA256SUMS_URL} .
+RUN \
+  echo "${REPRO_GET_SHA256SUMS_SHA256SUM}  SHA256SUMS" >SHASHA && \
+  sha256sum -c SHASHA && \
+  sha256sum --ignore-missing -c SHA256SUMS && \
+  mv repro-get-${REPRO_GET_VERSION}.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}} repro-get.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}  && \
+  chmod +x repro-get.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}
+
+FROM scratch AS repro-get-local
 ARG TARGETARCH
 ARG TARGETVARIANT
 COPY repro-get.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}} /
+
+FROM repro-get-${REPRO_GET_FETCH_MODE} AS repro-get
+
 
 FROM --platform=${TARGETPLATFORM} ${BASE_IMAGE}
 ARG TARGETARCH

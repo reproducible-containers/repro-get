@@ -3,6 +3,8 @@ PREFIX ?= /usr/local
 DEST := $(shell echo "$(DESTDIR)/$(PREFIX)" | sed 's:///*:/:g; s://*$$::')
 
 VERSION ?=$(shell git describe --match 'v[0-9]*' --dirty='.m' --always --tags)
+# DOWNLOADABLE_VERSION <= VERSION
+DOWNLOADABLE_VERSION ?= $(shell git describe --abbrev=0)
 PACKAGE := github.com/reproducible-containers/repro-get
 
 export CGO_ENABLED ?= 0
@@ -10,7 +12,7 @@ export DOCKER_BUILDKIT := 1
 export SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct)
 
 GO ?= go
-GO_BUILD ?= $(GO) build -trimpath -ldflags="-s -w -X $(PACKAGE)/pkg/version.Version=$(VERSION)"
+GO_BUILD ?= $(GO) build -trimpath -ldflags="-s -w -X $(PACKAGE)/pkg/version.Version=$(VERSION) -X $(PACKAGE)/pkg/version.DownloadableVersion=$(DOWNLOADABLE_VERSION)"
 DOCKER ?= docker
 DOCKER_BUILD ?= $(DOCKER) build
 UPX ?= upx --best --lzma

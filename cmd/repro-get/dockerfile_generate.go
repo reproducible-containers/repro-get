@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -11,15 +12,13 @@ import (
 	"github.com/reproducible-containers/repro-get/pkg/archutil"
 	"github.com/reproducible-containers/repro-get/pkg/distro"
 	"github.com/reproducible-containers/repro-get/pkg/ocidistutil"
+	"github.com/reproducible-containers/repro-get/pkg/version"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func helpForBuildingDockerfiles(needsToGenerateHash bool) string {
-	const tmpl = `# Copy the repro-get binary into the current directory
-cp $(command -v repro-get) ./repro-get.linux-{{.OCIArchDashVariant}}
-
-# Enable BuildKit
+	const tmpl = `# Enable BuildKit
 export DOCKER_BUILDKIT=1
 {{if .NeedsToGenerateHash}}
 # Generate "SHA256SUMS-{{.OCIArchDashVariant}}" in the current directory
@@ -27,9 +26,6 @@ docker build --output . -f Dockerfile.generate-hash .
 {{else}}{{end}}
 # Build the image
 docker build .
-
-# Clean up
-rm -f ./repro-get.linux-{{.OCIArchDashVariant}}
 `
 	parsed, err := template.New("").Parse(tmpl)
 	if err != nil {
@@ -103,12 +99,22 @@ func dockerfileGenerateAction(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if version.DownloadableVersion == "" {
+		return errors.New("variable pkg/version.DownloadableVersion is unset (Hint: rebuild the binary with the upstream Makefile)")
+	}
+	shasha, err := version.SHASHA(ctx, version.DownloadableVersion)
+	if err != nil {
+		return fmt.Errorf("failed to get the URL of the SHA256SUMS file for version %q: %w", version.DownloadableVersion, err)
+	}
+
 	templateArgs := distro.DockerfileTemplateArgs{
 		BaseImage:          resolvedWithDigest,
 		BaseImageOrig:      baseImageOrig,
 		Packages:           pkgs,
 		OCIArchDashVariant: archutil.OCIArchDashVariant(),
 		Providers:          providers,
+		ReproGetVersion:    version.DownloadableVersion,
+		ReproGetSHASHA:     shasha,
 	}
 	opts := distro.DockerfileOpts{
 		GenerateHash: len(pkgs) > 0,

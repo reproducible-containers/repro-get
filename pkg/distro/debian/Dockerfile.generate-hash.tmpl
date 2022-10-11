@@ -6,7 +6,6 @@
 
 # Usage:
 # ----------------------------------------------------------
-# cp $(command -v repro-get) ./repro-get.linux-{{.OCIArchDashVariant}}
 # export DOCKER_BUILDKIT=1
 # docker build --output . -f Dockerfile.generate-hash .
 # ----------------------------------------------------------
@@ -18,10 +17,9 @@ ARG BASE_IMAGE={{.BaseImage}} # {{.BaseImageOrig}}
 ARG PACKAGES="{{join .Packages " "}}"
 ARG SNAPSHOT_ARCHIVE_BASE=http://snapshot.debian.org/archive/
 
-FROM scratch AS repro-get
-ARG TARGETARCH
-ARG TARGETVARIANT
-COPY repro-get.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}} /
+ARG REPRO_GET_VERSION={{.ReproGetVersion}}
+ARG REPRO_GET_SHA256SUMS_SHA256SUM={{.ReproGetSHASHA}}
+{{snippet "fetch-repro-get"}}
 
 FROM --platform=${TARGETPLATFORM} ${BASE_IMAGE} AS generate-hash
 ARG PACKAGES
