@@ -37,9 +37,9 @@ jobs:
           (Changes to be documented)
 
           ## About the files
-          - repro-get-<VERSION>-linux-amd64:          Regular binary for x86_64
-          - repro-get-<VERSION>-linux-amd64.upx:      Compressed binary for x86_64
-          - repro-get-<VERSION>.go-mod-vendor.tar.gz: Backup of \`go mod vendor\` (Not needed for most people)
+          - repro-get-\<VERSION\>-linux-amd64:          Regular binary for x86_64
+          - repro-get-\<VERSION\>-linux-amd64.upx:      Compressed binary for x86_64
+          - repro-get-\<VERSION\>.go-mod-vendor.tar.gz: Backup of \`go mod vendor\` (Not needed for most people)
           - - -
           The binaries were built automatically on GitHub Actions.
           The build log is available for 90 days: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
