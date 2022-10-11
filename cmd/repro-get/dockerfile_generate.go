@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -64,6 +63,8 @@ To build "Dockerfile.generate-hash" and "Dockerfile":
 
 		DisableFlagsInUseLine: true,
 	}
+	flags := cmd.Flags()
+	flags.String("repro-get-version", version.Auto, "The version of repro-get binary to be downloaded, \"vX.Y.Z\", \"auto\", or \"latest\"")
 	return cmd
 }
 
@@ -86,6 +87,16 @@ func dockerfileGenerateAction(cmd *cobra.Command, args []string) error {
 	}
 
 	ctx := cmd.Context()
+
+	reproGetVersion, err := flags.GetString("repro-get-version")
+	if err != nil {
+		return err
+	}
+	downloadable, err := version.DetectDownloadable(ctx, reproGetVersion)
+	if err != nil {
+		return err
+	}
+
 	dir := args[0]
 	baseImageOrig := args[1]
 	pkgs := args[2:]
@@ -99,22 +110,14 @@ func dockerfileGenerateAction(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if version.DownloadableVersion == "" {
-		return errors.New("variable pkg/version.DownloadableVersion is unset (Hint: rebuild the binary with the upstream Makefile)")
-	}
-	shasha, err := version.SHASHA(ctx, version.DownloadableVersion)
-	if err != nil {
-		return fmt.Errorf("failed to get the URL of the SHA256SUMS file for version %q: %w", version.DownloadableVersion, err)
-	}
-
 	templateArgs := distro.DockerfileTemplateArgs{
 		BaseImage:          resolvedWithDigest,
 		BaseImageOrig:      baseImageOrig,
 		Packages:           pkgs,
 		OCIArchDashVariant: archutil.OCIArchDashVariant(),
 		Providers:          providers,
-		ReproGetVersion:    version.DownloadableVersion,
-		ReproGetSHASHA:     shasha,
+		ReproGetVersion:    downloadable.Version,
+		ReproGetSHASHA:     downloadable.SHASHA,
 	}
 	opts := distro.DockerfileOpts{
 		GenerateHash: len(pkgs) > 0,
