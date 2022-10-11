@@ -1,0 +1,129 @@
+# syntax = docker/dockerfile:1.4
+# ↑ for enabling `RUN --network=none`
+
+# No need to pin the digest for the test images
+ARG GOLANG_IMAGE=golang:1.19-bullseye
+ARG DEBIAN_IMAGE=debian:11
+ARG UBUNTU_IMAGE=ubuntu:22.04
+ARG FEDORA_IMAGE=fedora:36
+ARG ALPINE_IMAGE=alpine:3.16
+
+### Compile repro-get ###
+FROM ${GOLANG_IMAGE} AS repro-get
+COPY . /src
+WORKDIR /src
+RUN --mount=type=cache,target=/root/.cache \
+  --mount=type=cache,target=/go \
+  make && \
+  make install
+
+### Debian ###
+FROM ${DEBIAN_IMAGE} AS debian-generate-hash
+ENV DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-c"]
+RUN --mount=type=bind,from=repro-get,src=/usr/local/bin/repro-get,dst=/usr/local/bin/repro-get \
+  --mount=type=cache,target=/var/cache/repro-get \
+  mkdir -p /out && \
+  . /etc/os-release && \
+  SOURCE_DATE_EPOCH="$(stat --format=%Y /etc/apt/sources.list)" && \
+  snapshot="$(printf "%(%Y%m%dT%H%M%SZ)T\n" "${SOURCE_DATE_EPOCH}")" && \
+  echo "INFO: Syncing the apt cache for the snapshot at ${snapshot}" && \
+  echo "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/${snapshot} ${VERSION_CODENAME} main" >/etc/apt/sources.list && \
+  echo "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/${snapshot} ${VERSION_CODENAME}-security main" >>/etc/apt/sources.list && \
+  echo "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/${snapshot} ${VERSION_CODENAME}-updates main" >>/etc/apt/sources.list && \
+  apt-get update && \
+  repro-get hash generate >/out/SHA256SUMS-preinstalled && \
+  apt-get install --no-install-recommends -y neofetch && \
+  repro-get hash generate --dedupe=/out/SHA256SUMS-preinstalled  >/out/SHA256SUMS && \
+  repro-get download /out/SHA256SUMS && \
+  repro-get cache export /out/cache
+
+FROM ${DEBIAN_IMAGE} AS debian-install
+ENV DEBIAN_FRONTEND=noninteractive
+RUN --mount=type=bind,from=repro-get,src=/usr/local/bin/repro-get,dst=/usr/local/bin/repro-get \
+  --mount=type=bind,from=debian-generate-hash,src=/out,dst=/mnt \
+  --network=none \
+  mkdir -p /out && \
+  repro-get cache import /mnt/cache && \
+  repro-get install /mnt/SHA256SUMS && \
+  neofetch | tee /out/neofetch.out
+
+### Ubuntu ###
+FROM ${UBUNTU_IMAGE} AS ubuntu-generate-hash
+ENV DEBIAN_FRONTEND=noninteractive
+RUN --mount=type=bind,from=repro-get,src=/usr/local/bin/repro-get,dst=/usr/local/bin/repro-get \
+  --mount=type=cache,target=/var/cache/repro-get \
+  mkdir -p /out && \
+  mkdir -p /out && \
+  apt-get update && \
+  echo "INFO: Upgrading existing pacakges for consistency with the apt cache (Ubuntu does not have a snapshot server, so we can't sync the cache with preinstalled packages)" && \
+  apt-get upgrade -y && \
+  repro-get hash generate >/out/SHA256SUMS-preinstalled && \
+  apt-get install --no-install-recommends -y neofetch && \
+  repro-get hash generate --dedupe=/out/SHA256SUMS-preinstalled  >/out/SHA256SUMS && \
+  repro-get download /out/SHA256SUMS && \
+  repro-get cache export /out/cache
+
+FROM ${UBUNTU_IMAGE} AS ubuntu-install
+ENV DEBIAN_FRONTEND=noninteractive
+RUN --mount=type=bind,from=repro-get,src=/usr/local/bin/repro-get,dst=/usr/local/bin/repro-get \
+  --mount=type=bind,from=ubuntu-generate-hash,src=/out,dst=/mnt \
+  --network=none \
+  mkdir -p /out && \
+  repro-get cache import /mnt/cache && \
+  repro-get install /mnt/SHA256SUMS && \
+  neofetch | tee /out/neofetch.out
+
+### Fedora ###
+FROM ${FEDORA_IMAGE} AS fedora-generate-hash
+RUN --mount=type=bind,from=repro-get,src=/usr/local/bin/repro-get,dst=/usr/local/bin/repro-get \
+  --mount=type=cache,target=/var/cache/repro-get \
+  mkdir -p /out && \
+  mkdir -p /out && \
+  repro-get hash generate >/out/SHA256SUMS-preinstalled && \
+  dnf install --setopt=install_weak_deps=False -y neofetch && \
+  repro-get hash generate --dedupe=/out/SHA256SUMS-preinstalled  >/out/SHA256SUMS && \
+  repro-get download /out/SHA256SUMS && \
+  repro-get cache export /out/cache
+
+FROM ${FEDORA_IMAGE} AS fedora-install
+RUN --mount=type=bind,from=repro-get,src=/usr/local/bin/repro-get,dst=/usr/local/bin/repro-get \
+  --mount=type=bind,from=fedora-generate-hash,src=/out,dst=/mnt \
+  --network=none \
+  mkdir -p /out && \
+  repro-get cache import /mnt/cache && \
+  repro-get install /mnt/SHA256SUMS && \
+  neofetch | tee /out/neofetch.out
+
+### Alpine ###
+FROM ${ALPINE_IMAGE} AS alpine-generate-hash
+RUN --mount=type=bind,from=repro-get,src=/usr/local/bin/repro-get,dst=/usr/local/bin/repro-get \
+  mkdir -p /out && \
+  apk update && \
+  echo "INFO: Upgrading existing pacakges for consistency with the apk cache (Alpine does not have a snapshot server, so we can't sync the cache with preinstalled packages)" && \
+  apk upgrade && \
+  repro-get hash generate >/out/SHA256SUMS-preinstalled && \
+  apk add neofetch && \
+  repro-get hash generate --dedupe=/out/SHA256SUMS-preinstalled  >/out/SHA256SUMS && \
+  repro-get download /out/SHA256SUMS && \
+  repro-get cache export /out/cache
+
+FROM ${ALPINE_IMAGE} AS alpine-install
+RUN --mount=type=bind,from=repro-get,src=/usr/local/bin/repro-get,dst=/usr/local/bin/repro-get \
+  --mount=type=bind,from=alpine-generate-hash,src=/out,dst=/mnt \
+  --network=none \
+  mkdir -p /out && \
+  repro-get cache import /mnt/cache && \
+  repro-get install /mnt/SHA256SUMS && \
+  neofetch | tee /out/neofetch.out
+
+### Result ###
+FROM scratch
+COPY --from=debian-generate-hash /out/ /debian-generate-hash
+COPY --from=debian-install /out/ /debian-install
+COPY --from=ubuntu-generate-hash /out/ /ubuntu-generate-hash
+COPY --from=ubuntu-install /out/ /ubuntu-install
+COPY --from=fedora-generate-hash /out/ /fedora-generate-hash
+COPY --from=fedora-install /out/ /fedora-install
+COPY --from=alpine-generate-hash /out/ /alpine-generate-hash
+COPY --from=alpine-install /out/ /alpine-install

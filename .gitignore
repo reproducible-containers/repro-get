@@ -1,0 +1,5 @@
+/repro-get
+/vendor
+/_artifacts
+/_output
+repro-get.linux-*
