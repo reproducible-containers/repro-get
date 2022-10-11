@@ -18,7 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          # https://github.com/reproducible-containers/repro-get/issues/3
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: "Make artifacts"
         run: make artifacts.docker
       - name: "SHA256SUMS"

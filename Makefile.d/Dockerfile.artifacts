@@ -1,3 +1,4 @@
+# syntax = docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
 FROM golang:1.19.2-bullseye@sha256:aa5113dbcd625bfc6299b01a995c06dadb20471973adef869a218de835dc8df8 AS build-artifacts
 COPY . /src
 WORKDIR /src
