@@ -3,33 +3,102 @@ package version
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/url"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/opencontainers/go-digest"
 	"github.com/reproducible-containers/repro-get/pkg/urlopener"
+	"github.com/sirupsen/logrus"
 )
 
 // Variables can be fulfilled on compilation time: -ldflags="-X github.com/reproducible-containers/repro-get/pkg/version.Version=v0.1.2"
 var (
-	Version             string
-	DownloadableVersion string // <= Version
+	Version string
 
-	SHA256SUMSDownloadURLTemplate = "https://github.com/reproducible-containers/repro-get/releases/download/{{.DownloadableVersion}}/SHA256SUMS"
+	SHA256SUMSDownloadURLTemplate = "https://github.com/reproducible-containers/repro-get/releases/download/{{.Version}}/SHA256SUMS"
+	LatestVersionURL              = "https://github.com/reproducible-containers/repro-get/releases/latest/download/VERSION"
 )
 
-// SHASHA returns the sha256sum of the SHA256SUMS file.
-func SHASHA(ctx context.Context, downloadableVersion string) (string, error) {
+const (
+	Latest = "latest"
+	Auto   = "auto" // current version or latest
+)
+
+type Downloadable struct {
+	Version string
+	SHASHA  string // the sha256sum of the SHA256SUMS file
+}
+
+func DetectDownloadable(ctx context.Context, version string) (*Downloadable, error) {
+	var err error
+	switch version {
+	case Auto:
+		currentVersion := GetVersion()
+		rec, err := DetectDownloadable(ctx, currentVersion)
+		if err != nil {
+			logrus.WithError(err).Warnf("The current version %q does not seem downloadable, falling back to the latest version", currentVersion)
+			rec, err = DetectDownloadable(ctx, Latest)
+			if err != nil {
+				return nil, fmt.Errorf("failed to detect the latest version: %w", err)
+			}
+		}
+		logrus.Debugf("Automatically detected downloadable version: %+v", rec)
+		return rec, nil
+	case Latest:
+		version, err = DetectLatest(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to detect the latest version: %w", err)
+		}
+		logrus.Infof("Detected latest version %q", version)
+	default:
+		// NOP
+	}
+
+	if !strings.HasPrefix(version, "v") || strings.Contains(version, "-g") || strings.HasSuffix(version, ".m") {
+		return nil, fmt.Errorf("non-downloadable version: %q", version)
+	}
+	d := &Downloadable{
+		Version: version,
+	}
+	d.SHASHA, err = shasha(ctx, version)
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect the sha256sum of the SHA256SUMS file for version %q: %w", version, err)
+	}
+	return d, nil
+}
+
+func DetectLatest(ctx context.Context) (string, error) {
+	u, err := url.Parse(LatestVersionURL)
+	if err != nil {
+		return "", err
+	}
+	uo := urlopener.New()
+	r, _, err := uo.Open(ctx, u, "")
+	if err != nil {
+		return "", err
+	}
+	defer r.Close()
+	b, err := io.ReadAll(r)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(b)), nil
+}
+
+// shasha returns the sha256sum of the SHA256SUMS file.
+func shasha(ctx context.Context, version string) (string, error) {
 	tmpl, err := template.New("").Parse(SHA256SUMSDownloadURLTemplate)
 	if err != nil {
 		return "", err
 	}
 	var b bytes.Buffer
 	args := map[string]string{
-		"DownloadableVersion": downloadableVersion,
+		"Version": version,
 	}
 	if err = tmpl.Execute(&b, args); err != nil {
 		return "", err
