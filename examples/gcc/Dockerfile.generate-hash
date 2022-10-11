@@ -19,8 +19,8 @@ ARG SNAPSHOT_ARCHIVE_BASE=http://snapshot.debian.org/archive/
 # Backports do not seem cached in https://debian.notset.fr/
 ARG BACKPORTS=0
 
-ARG REPRO_GET_VERSION=v0.1.0
-ARG REPRO_GET_SHA256SUMS_SHA256SUM=a23ee0e0a2a2e940809b968befc84aa928323c86d3f4eef1f1653c96c2861632
+ARG REPRO_GET_VERSION=v0.1.1
+ARG REPRO_GET_SHA256SUMS_SHA256SUM=da4a0fec2e5929b7b94729c6658c45298bdfe35e29c0c5c58ebcca4dfa5dfab2
 # "download" or "local"
 ARG REPRO_GET_FETCH_MODE=download
 ARG REPRO_GET_BINARY_URL=https://github.com/reproducible-containers/repro-get/releases/download/${REPRO_GET_VERSION}/repro-get-${REPRO_GET_VERSION}.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}
