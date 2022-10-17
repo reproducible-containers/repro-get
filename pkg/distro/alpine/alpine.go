@@ -25,8 +25,6 @@ import (
 
 const Name = "alpine"
 
-var ErrNotImplemented = fmt.Errorf("distro driver %q does not implement the requested feature", Name)
-
 func New() distro.Distro {
 	d := &alpine{
 		info: distro.Info{
@@ -238,5 +236,5 @@ func (d *alpine) InstallPackages(ctx context.Context, c *cache.Cache, pkgs []fil
 }
 
 func (d *alpine) GenerateDockerfile(ctx context.Context, dir string, args distro.DockerfileTemplateArgs, opts distro.DockerfileOpts) error {
-	return ErrNotImplemented
+	return distro.ErrNotImplemented
 }

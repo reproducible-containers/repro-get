@@ -2,7 +2,6 @@ package none
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/reproducible-containers/repro-get/pkg/cache"
 	"github.com/reproducible-containers/repro-get/pkg/distro"
@@ -10,8 +9,6 @@ import (
 )
 
 const Name = "none"
-
-var ErrNotImplemented = fmt.Errorf("distro driver %q does not implement the requested feature", Name)
 
 func New() distro.Distro {
 	d := &none{
@@ -32,11 +29,11 @@ func (d *none) Info() distro.Info {
 }
 
 func (d *none) GenerateHash(ctx context.Context, hw distro.HashWriter, opts distro.HashOpts) error {
-	return ErrNotImplemented
+	return distro.ErrNotImplemented
 }
 
 func (d *none) PackageName(sp filespec.FileSpec) (string, error) {
-	return "", ErrNotImplemented
+	return "", distro.ErrNotImplemented
 }
 
 func (d *none) IsPackageVersionInstalled(ctx context.Context, sp filespec.FileSpec) (bool, error) {
@@ -48,9 +45,9 @@ func (d *none) InstallPackages(ctx context.Context, c *cache.Cache, pkgs []files
 	if len(pkgs) == 0 {
 		return nil
 	}
-	return ErrNotImplemented
+	return distro.ErrNotImplemented
 }
 
 func (d *none) GenerateDockerfile(ctx context.Context, dir string, args distro.DockerfileTemplateArgs, opts distro.DockerfileOpts) error {
-	return ErrNotImplemented
+	return distro.ErrNotImplemented
 }

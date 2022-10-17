@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -15,6 +16,8 @@ import (
 	"github.com/reproducible-containers/repro-get/pkg/filespec"
 	"github.com/sirupsen/logrus"
 )
+
+var ErrNotImplemented = errors.New("the specified distro driver does not implement the requested feature")
 
 // Distro is a distro driver.
 type Distro interface {

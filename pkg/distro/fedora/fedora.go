@@ -26,8 +26,6 @@ const (
 	kojiPackages = "https://kojipkgs.fedoraproject.org/packages/"
 )
 
-var ErrNotImplemented = fmt.Errorf("distro driver %q does not implement the requested feature", Name)
-
 func New() distro.Distro {
 	d := &fedora{
 		info: distro.Info{
@@ -268,5 +266,5 @@ func (d *fedora) InstallPackages(ctx context.Context, c *cache.Cache, pkgs []fil
 }
 
 func (d *fedora) GenerateDockerfile(ctx context.Context, dir string, args distro.DockerfileTemplateArgs, opts distro.DockerfileOpts) error {
-	return ErrNotImplemented
+	return distro.ErrNotImplemented
 }
