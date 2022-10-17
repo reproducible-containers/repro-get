@@ -37,6 +37,8 @@ func New() distro.Distro {
 				"http://deb.debian.org/debian/{{.Name}}",                      // fast, multi-arch, ephemeral
 				"http://deb.debian.org/debian-security/{{.Name}}",             // fast, multi-arch, ephemeral
 				"http://debian.notset.fr/snapshot/by-hash/SHA256/{{.SHA256}}", // slow, amd64 only, persistent
+				"http://archive.debian.org/debian/{{.Name}}",                  // multi-arch, persistent, EOL only
+				"http://archive.debian.org/debian-security/{{.Name}}",         // multi-arch, persistent, EOL only
 			},
 		},
 	}
@@ -52,6 +54,7 @@ func NewUbuntu() distro.Distro {
 				"http://ports.ubuntu.com/{{.Name}}",          // multi-arch, ephemeral
 				"http://archive.ubuntu.com/ubuntu/{{.Name}}", // amd64 only, ephemeral
 				// Ubuntu has no equivalent of debian.notset.fr
+				"http://old-releases.ubuntu.com/ubuntu/{{.Name}}", // multi-arch, persistent, EOL only
 			},
 		},
 	}
