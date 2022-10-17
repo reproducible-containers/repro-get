@@ -2,7 +2,7 @@
 [[📖 **Quick start]**](#quick-start)
 [[❓**FAQs & Troubleshooting]**](#faqs)
 
-# `repro-get`: reproducible `apt`, `dnf`, and `apk`, with content-addressing
+# `repro-get`: reproducible `apt`, `dnf`, `apk`, and `pacman`, with content-addressing
 
 ✅ HTTP and HTTPS
 
@@ -27,20 +27,30 @@ Setting up hello (2.10-2) ...
 
 `repro-get` supports the following distros:
 
-| Distro                  | "Batteries included" | Support generating Dockerfiles |
-| ----------------------- | -------------------- | ------------------------------ |
-| `debian`                | ✅ (on amd64)        | ✅                             |
-| `ubuntu`                | ❌                   | ❌                             |
-| `fedora` (Experimental) | ✅                   | ❌                             |
-| `alpine` (Experimental) | ❌                   | ❌                             |
+| Distro                  | "Batteries included" | Support generating Dockerfiles | Support verifying package signatures |
+| ----------------------- | -------------------- | ------------------------------ | ------------------------------------ |
+| `debian`                | ✅ (on amd64)        | ✅                             | [❌](https://github.com/reproducible-containers/repro-get/issues/10) |
+| `ubuntu`                | ❌                   | ❌                             | ❌                                   |
+| `fedora` (Experimental) | ✅                   | ❌                             | ✅                                   |
+| `alpine` (Experimental) | ❌                   | ❌                             | ✅                                   |
+| `arch`   (Experimental) | ✅                   | ❌                             | ❌                                   |
 
-"Batteries included" for Debian and Fedora;
+<details>
+<summary> "Batteries included" for Debian, Fedora, and Arch Linux.</summary>
+
+<p>
+
 On Debian, the packages are fetched from the following URLs by default:
 - `http://deb.debian.org/debian/{{.Name}}` for recent packages (fast, multi-arch, but ephemeral)
 - `http://debian.notset.fr/snapshot/by-hash/SHA256/{{.SHA256}}` for archived packages (slow, amd64 only, but persistent)
 
-On Fedora, the packages are fetched from the following URL by default:
-- `https://kojipkgs.fedoraproject.org/packages/{{.Name}}` (multi-arch and persistent)
+On Fedora: `https://kojipkgs.fedoraproject.org/packages/{{.Name}}` (multi-arch and persistent)
+
+On Arch Linux: `https://archive.archlinux.org/packages/{{.Name}}` (multi-arch and persistent)
+
+</p>
+
+</details>
 
 On other distros, the file provider has to be manually specified in the `--provider=...` flag for long-term persistence.
 
