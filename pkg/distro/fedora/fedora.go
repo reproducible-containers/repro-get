@@ -209,9 +209,39 @@ func installed(r io.Reader) (map[string]rpmutil.RPM, error) {
 	return pkgs, sc.Err()
 }
 
+func (d *fedora) checkSigs(ctx context.Context, c *cache.Cache, pkgs []filespec.FileSpec, opts distro.InstallOpts) error {
+	if len(pkgs) == 0 {
+		return nil
+	}
+	cmdName, err := exec.LookPath("rpmkeys")
+	if err != nil {
+		return err
+	}
+	args := []string{"--checksig"}
+	logrus.Infof("Running '%s %s ...' with %d packages", cmdName, strings.Join(args, " "), len(pkgs))
+	for _, pkg := range pkgs {
+		blob, err := c.BlobAbsPath(pkg.SHA256)
+		if err != nil {
+			return err
+		}
+		args = append(args, blob)
+	}
+	cmd := exec.CommandContext(ctx, cmdName, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	logrus.Debugf("Running %v", cmd.Args)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *fedora) InstallPackages(ctx context.Context, c *cache.Cache, pkgs []filespec.FileSpec, opts distro.InstallOpts) error {
 	if len(pkgs) == 0 {
 		return nil
+	}
+	if err := d.checkSigs(ctx, c, pkgs, opts); err != nil {
+		return fmt.Errorf("failed to check the RPM signatures: %w", err)
 	}
 	cmdName, err := exec.LookPath("rpm")
 	if err != nil {
