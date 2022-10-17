@@ -138,29 +138,30 @@ func urlToFilenameWithoutProvider(u *url.URL) (string, error) {
 	return "", fmt.Errorf("failed to parse %q", u.Redacted())
 }
 
-func (d *alpine) PackageName(sp filespec.FileSpec) (string, error) {
-	if sp.APK == nil {
-		return "", fmt.Errorf("apk information not available for %q", sp.Name)
+func (d *alpine) InspectFile(ctx context.Context, sp filespec.FileSpec, opts distro.InspectFileOpts) (*distro.FileInfo, error) {
+	inf := &distro.FileInfo{
+		FileSpec: sp,
 	}
-	return sp.APK.Package, nil
-}
-
-func (d *alpine) IsPackageVersionInstalled(ctx context.Context, sp filespec.FileSpec) (bool, error) {
 	if sp.APK == nil {
-		return false, fmt.Errorf("apk information not available for %q", sp.Name)
+		return inf, nil
 	}
-	if d.installed == nil {
-		var err error
-		d.installed, err = Installed()
-		if err != nil {
-			return false, fmt.Errorf("failed to detect installed apks: %w", err)
+	inf.IsPackage = true
+	inf.PackageName = sp.APK.Package
+	if opts.CheckInstalled {
+		if d.installed == nil {
+			var err error
+			d.installed, err = Installed()
+			if err != nil {
+				return inf, fmt.Errorf("failed to detect installed packages: %w", err)
+			}
+		}
+		k := sp.APK.Package
+		if inst, ok := d.installed[k]; ok {
+			installed := inst.Version == sp.APK.Version
+			inf.Installed = &installed
 		}
 	}
-	inst, ok := d.installed[sp.APK.Package]
-	if !ok {
-		return false, nil
-	}
-	return inst.Version == sp.APK.Version, nil
+	return inf, nil
 }
 
 // Installed returns the package map.

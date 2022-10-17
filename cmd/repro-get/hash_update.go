@@ -52,12 +52,12 @@ func hashUpdateAction(cmd *cobra.Command, args []string) error {
 
 	var pkgs []string
 	for _, f := range fileSpecs {
-		pkg, err := d.PackageName(*f)
+		inf, err := d.InspectFile(ctx, *f, distro.InspectFileOpts{})
 		if err != nil {
 			logrus.WithError(err).Warnf("Failed to resolve the package name of %q", f.Name)
 			continue
 		}
-		pkgs = append(pkgs, pkg)
+		pkgs = append(pkgs, inf.PackageName)
 	}
 
 	opts := distro.HashOpts{

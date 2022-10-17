@@ -153,33 +153,33 @@ func generateHash(hw distro.HashWriter, r io.Reader) error {
 	return nil
 }
 
-func (d *debian) PackageName(sp filespec.FileSpec) (string, error) {
-	if sp.Dpkg == nil {
-		return "", fmt.Errorf("dpkg information not available for %q", sp.Name)
+func (d *debian) InspectFile(ctx context.Context, sp filespec.FileSpec, opts distro.InspectFileOpts) (*distro.FileInfo, error) {
+	inf := &distro.FileInfo{
+		FileSpec: sp,
 	}
-	return sp.Dpkg.Package, nil
-}
-
-func (d *debian) IsPackageVersionInstalled(ctx context.Context, sp filespec.FileSpec) (bool, error) {
 	if sp.Dpkg == nil {
-		return false, fmt.Errorf("dpkg information not available for %q", sp.Name)
+		return inf, nil
 	}
-	if d.installed == nil {
-		var err error
-		d.installed, err = Installed()
-		if err != nil {
-			return false, fmt.Errorf("failed to detect installed dpkgs: %w", err)
+	inf.IsPackage = true
+	inf.PackageName = sp.Dpkg.Package
+	if opts.CheckInstalled {
+		if d.installed == nil {
+			var err error
+			d.installed, err = Installed()
+			if err != nil {
+				return inf, fmt.Errorf("failed to detect installed packages: %w", err)
+			}
+		}
+		k := sp.Dpkg.Package
+		if sp.Dpkg.Architecture != "" {
+			k += ":" + sp.Dpkg.Architecture
+		}
+		if inst, ok := d.installed[k]; ok {
+			installed := inst.Version == sp.Dpkg.Version
+			inf.Installed = &installed
 		}
 	}
-	k := sp.Dpkg.Package
-	if sp.Dpkg.Architecture != "" {
-		k += ":" + sp.Dpkg.Architecture
-	}
-	inst, ok := d.installed[k]
-	if !ok {
-		return false, nil
-	}
-	return inst.Version == sp.Dpkg.Version, nil
+	return inf, nil
 }
 
 // Installed returns the package map.

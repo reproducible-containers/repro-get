@@ -142,33 +142,33 @@ func (d *fedora) generateHash1(ctx context.Context, hw distro.HashWriter, c *cac
 	return hw(sha256sum, fname)
 }
 
-func (d *fedora) PackageName(sp filespec.FileSpec) (string, error) {
-	if sp.RPM == nil {
-		return "", fmt.Errorf("rpm information not available for %q", sp.Name)
+func (d *fedora) InspectFile(ctx context.Context, sp filespec.FileSpec, opts distro.InspectFileOpts) (*distro.FileInfo, error) {
+	inf := &distro.FileInfo{
+		FileSpec: sp,
 	}
-	return sp.RPM.Package, nil
-}
-
-func (d *fedora) IsPackageVersionInstalled(ctx context.Context, sp filespec.FileSpec) (bool, error) {
 	if sp.RPM == nil {
-		return false, fmt.Errorf("rpm information not available for %q", sp.Name)
+		return inf, nil
 	}
-	if d.installed == nil {
-		var err error
-		d.installed, err = Installed()
-		if err != nil {
-			return false, fmt.Errorf("failed to detect installed rpms: %w", err)
+	inf.IsPackage = true
+	inf.PackageName = sp.RPM.Package
+	if opts.CheckInstalled {
+		if d.installed == nil {
+			var err error
+			d.installed, err = Installed()
+			if err != nil {
+				return inf, fmt.Errorf("failed to detect installed packages: %w", err)
+			}
+		}
+		k := sp.RPM.Package
+		if sp.RPM.Architecture != "" {
+			k += ":" + sp.RPM.Architecture
+		}
+		if inst, ok := d.installed[k]; ok {
+			installed := inst.Version+"."+inst.Release == sp.RPM.Version+"."+sp.RPM.Release
+			inf.Installed = &installed
 		}
 	}
-	k := sp.RPM.Package
-	if sp.RPM.Architecture != "" {
-		k += ":" + sp.RPM.Architecture
-	}
-	inst, ok := d.installed[k]
-	if !ok {
-		return false, nil
-	}
-	return inst.Version+"."+inst.Release == sp.RPM.Version+"."+sp.RPM.Release, nil
+	return inf, nil
 }
 
 // Installed returns the package map.

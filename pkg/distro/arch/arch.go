@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -89,7 +90,10 @@ func (d *arch) generateHash(ctx context.Context, hw distro.HashWriter, c *cache.
 		if err := d.generateHash1(ctx, hw, c, urlOpener, rawURL); err != nil {
 			return err
 		}
-		// TODO: download ".sig" too
+		sigRawURL := rawURL + ".sig"
+		if err := d.generateHash1(ctx, hw, c, urlOpener, sigRawURL); err != nil {
+			return err
+		}
 	}
 	if err := sc.Err(); err != nil {
 		return err
@@ -104,7 +108,7 @@ func (d *arch) generateHash1(ctx context.Context, hw distro.HashWriter, c *cache
 	}
 	logrus.Debugf("Generating the hash for %q", u.Redacted())
 	basename := path.Base(u.Path)
-	pkg, err := pacmanutil.ParseFilename(basename)
+	pkg, err := pacmanutil.ParseFilename(strings.TrimSuffix(basename, ".sig"))
 	if err != nil {
 		return err
 	}
@@ -123,33 +127,45 @@ func (d *arch) generateHash1(ctx context.Context, hw distro.HashWriter, c *cache
 	return hw(sha256sum, fname)
 }
 
-func (d *arch) PackageName(sp filespec.FileSpec) (string, error) {
-	if sp.Pacman == nil {
-		return "", fmt.Errorf("pacman information not available for %q", sp.Name)
+func (d *arch) InspectFile(ctx context.Context, sp filespec.FileSpec, opts distro.InspectFileOpts) (*distro.FileInfo, error) {
+	inf := &distro.FileInfo{
+		FileSpec: sp,
 	}
-	return sp.Pacman.Package, nil
-}
-
-func (d *arch) IsPackageVersionInstalled(ctx context.Context, sp filespec.FileSpec) (bool, error) {
+	var pkg pacmanutil.Pacman
 	if sp.Pacman == nil {
-		return false, fmt.Errorf("pacman information not available for %q", sp.Name)
+		if strings.HasSuffix(sp.Name, ".pkg.tar.zst.sig") {
+			inf.IsAux = true
+			pkgP, err := pacmanutil.Split(strings.TrimSuffix(sp.Name, ".pkg.tar.zst.dig"))
+			if err != nil {
+				return inf, err
+			}
+			pkg = *pkgP
+		} else {
+			return inf, nil
+		}
+	} else {
+		inf.IsPackage = true
+		pkg = *sp.Pacman
 	}
-	if d.installed == nil {
-		var err error
-		d.installed, err = Installed()
-		if err != nil {
-			return false, fmt.Errorf("failed to detect installed rpms: %w", err)
+	inf.PackageName = pkg.Package
+	if opts.CheckInstalled {
+		if d.installed == nil {
+			var err error
+			d.installed, err = Installed()
+			if err != nil {
+				return inf, fmt.Errorf("failed to detect installed packages: %w", err)
+			}
+		}
+		k := pkg.Package
+		if pkg.Architecture != "" {
+			k += ":" + pkg.Architecture
+		}
+		if inst, ok := d.installed[k]; ok {
+			installed := inst.Version == pkg.Version
+			inf.Installed = &installed
 		}
 	}
-	k := sp.Pacman.Package
-	if sp.Pacman.Architecture != "" {
-		k += ":" + sp.Pacman.Architecture
-	}
-	inst, ok := d.installed[k]
-	if !ok {
-		return false, nil
-	}
-	return inst.Version == sp.Pacman.Version, nil
+	return inf, nil
 }
 
 // Installed returns the package map.
@@ -210,20 +226,66 @@ func (d *arch) InstallPackages(ctx context.Context, c *cache.Cache, pkgs []files
 	if len(pkgs) == 0 {
 		return nil
 	}
-	cmdName, err := exec.LookPath("pacman")
+
+	tmpDir, err := os.MkdirTemp("", "repro-get-pacman-*.tmp")
 	if err != nil {
 		return err
 	}
-	args := []string{"-Uv", "--noconfirm"}
-	logrus.Infof("Running '%s %s ...' with %d packages", cmdName, strings.Join(args, " "), len(pkgs))
-	for _, pkg := range pkgs {
-		blob, err := c.BlobAbsPath(pkg.SHA256)
+	defer os.RemoveAll(tmpDir)
+
+	// Prepare symlinks
+	for _, f := range append(pkgs, opts.AuxFiles...) {
+		blob, err := c.BlobAbsPath(f.SHA256)
 		if err != nil {
 			return err
 		}
-		args = append(args, blob)
+		if filepath.Base(f.Basename) != f.Basename {
+			return fmt.Errorf("bad basename %q", f.Basename)
+		}
+		ln := filepath.Join(tmpDir, f.Basename) // no need to use securejoin (f.Basename is verified)
+		if err := os.Symlink(blob, ln); err != nil {
+			return err
+		}
+	}
+
+	cmdName, err := exec.LookPath("pacman-key")
+	if err != nil {
+		return err
+	}
+	args := []string{"--verify"}
+	logrus.Infof("Running '%s %s ...' with %d signatures", cmdName, strings.Join(args, " "), len(opts.AuxFiles))
+
+	pkgSigMap := make(map[string]string) // key: pkg basename, val: sig basename
+	for _, f := range opts.AuxFiles {
+		if !strings.HasSuffix(f.Basename, ".sig") {
+			return fmt.Errorf("expected *.sig, got %q", f.Basename)
+		}
+		pkgSigMap[strings.TrimSuffix(f.Basename, ".sig")] = f.Basename
+		file := filepath.Join(tmpDir, f.Basename) // securejoin can't be used for symlinks; f.Basename is verified
+		args = append(args, file)
 	}
 	cmd := exec.CommandContext(ctx, cmdName, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	logrus.Debugf("Running %v", cmd.Args)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmdName, err = exec.LookPath("pacman")
+	if err != nil {
+		return err
+	}
+	args = []string{"-Uv", "--noconfirm"}
+	logrus.Infof("Running '%s %s ...' with %d packages", cmdName, strings.Join(args, " "), len(pkgs))
+	for _, f := range pkgs {
+		if _, ok := pkgSigMap[f.Basename]; !ok {
+			return fmt.Errorf("no signature found for package %q", f.Basename)
+		}
+		file := filepath.Join(tmpDir, f.Basename) // securejoin can't be used for symlinks; f.Basename is verified
+		args = append(args, file)
+	}
+	cmd = exec.CommandContext(ctx, cmdName, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

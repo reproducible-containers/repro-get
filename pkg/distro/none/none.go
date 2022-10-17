@@ -32,13 +32,12 @@ func (d *none) GenerateHash(ctx context.Context, hw distro.HashWriter, opts dist
 	return distro.ErrNotImplemented
 }
 
-func (d *none) PackageName(sp filespec.FileSpec) (string, error) {
-	return "", distro.ErrNotImplemented
-}
-
-func (d *none) IsPackageVersionInstalled(ctx context.Context, sp filespec.FileSpec) (bool, error) {
+func (d *none) InspectFile(ctx context.Context, sp filespec.FileSpec, opts distro.InspectFileOpts) (*distro.FileInfo, error) {
+	inf := &distro.FileInfo{
+		FileSpec: sp,
+	}
 	// No need to return ErrNotImplemented
-	return false, nil
+	return inf, nil
 }
 
 func (d *none) InstallPackages(ctx context.Context, c *cache.Cache, pkgs []filespec.FileSpec, opts distro.InstallOpts) error {

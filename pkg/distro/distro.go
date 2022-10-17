@@ -27,11 +27,8 @@ type Distro interface {
 	// GenerateHash generates hash files.
 	GenerateHash(ctx context.Context, hw HashWriter, opts HashOpts) error
 
-	// PackageName returns the package name string that can be used in HashOpts.FilterByName.
-	PackageName(sp filespec.FileSpec) (string, error)
-
-	// IsPackageVersionInstalled checks that the package with the specified version is installed.
-	IsPackageVersionInstalled(ctx context.Context, sp filespec.FileSpec) (bool, error)
+	// InspectFile inspects a file
+	InspectFile(ctx context.Context, sp filespec.FileSpec, opts InspectFileOpts) (*FileInfo, error)
 
 	// InstallPackages installs the packages. The packages must be cached.
 	InstallPackages(ctx context.Context, c *cache.Cache, pkgs []filespec.FileSpec, opts InstallOpts) error
@@ -45,6 +42,18 @@ type Info struct {
 	DefaultProviders               []string `json:"DefaultProviders"`
 	Experimental                   bool     `json:"Experimental"`
 	CacheIsNeededForGeneratingHash bool     `json:"-"` // Implementation detail, not exposed in the JSON
+}
+
+type FileInfo struct {
+	filespec.FileSpec
+	IsPackage   bool
+	IsAux       bool
+	PackageName string
+	Installed   *bool
+}
+
+type InspectFileOpts struct {
+	CheckInstalled bool // can be slow
 }
 
 type HashOpts struct {
@@ -104,5 +113,5 @@ type DockerfileOpts struct {
 }
 
 type InstallOpts struct {
-	// Reserved
+	AuxFiles []filespec.FileSpec
 }
