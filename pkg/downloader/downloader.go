@@ -14,7 +14,17 @@ import (
 )
 
 type Result struct {
-	PackagesToBeInstalled []filespec.FileSpec // contains files that were already cached
+	PackagesToBeInstalled   []filespec.FileSpec // contains files that were already cached
+	AuxFilesForInstallation []filespec.FileSpec
+}
+
+func (r *Result) keep(inf distro.FileInfo) {
+	if inf.IsPackage {
+		r.PackagesToBeInstalled = append(r.PackagesToBeInstalled, inf.FileSpec)
+	}
+	if inf.IsAux {
+		r.AuxFilesForInstallation = append(r.AuxFilesForInstallation, inf.FileSpec)
+	}
 }
 
 type Opts struct {
@@ -58,13 +68,24 @@ func Download(ctx context.Context, d distro.Distro, cache *cache.Cache, fileSpec
 		printPackageStatus := func(s string, ff ...interface{}) {
 			printPackageStatusBase(i, sp.Basename, s, ff...)
 		}
+		inf, err := d.InspectFile(ctx, *sp, distro.InspectFileOpts{})
+		if err != nil {
+			logrus.WithError(err).Warnf("Failed to inspect %+v", sp)
+			continue
+		}
+		if !inf.IsPackage && !inf.IsAux {
+			printPackageStatus("Not needed")
+			continue
+		}
 		if opts.SkipInstalled {
-			packageVersionInstalled, err := d.IsPackageVersionInstalled(ctx, *sp)
+			var installed bool
+			infDeep, err := d.InspectFile(ctx, *sp, distro.InspectFileOpts{CheckInstalled: true})
 			if err != nil {
 				logrus.WithError(err).Warnf("Failed to check whether installed: %qw", sp.Basename)
-				packageVersionInstalled = false
+			} else if infDeep.Installed != nil {
+				installed = *infDeep.Installed
 			}
-			if packageVersionInstalled {
+			if installed {
 				printPackageStatus("Already installed")
 				continue
 			}
@@ -76,7 +97,7 @@ func Download(ctx context.Context, d distro.Distro, cache *cache.Cache, fileSpec
 		}
 		if cached {
 			printPackageStatus("Cached")
-			res.PackagesToBeInstalled = append(res.PackagesToBeInstalled, *sp)
+			res.keep(*inf)
 			continue
 		}
 		for j, provider := range providers {
@@ -95,7 +116,7 @@ func Download(ctx context.Context, d distro.Distro, cache *cache.Cache, fileSpec
 				break
 			}
 		}
-		res.PackagesToBeInstalled = append(res.PackagesToBeInstalled, *sp)
+		res.keep(*inf)
 	}
 	return &res, nil
 }

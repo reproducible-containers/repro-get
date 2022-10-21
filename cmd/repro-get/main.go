@@ -7,6 +7,7 @@ import (
 
 	"github.com/reproducible-containers/repro-get/pkg/distro"
 	"github.com/reproducible-containers/repro-get/pkg/distro/alpine"
+	"github.com/reproducible-containers/repro-get/pkg/distro/arch"
 	"github.com/reproducible-containers/repro-get/pkg/distro/debian"
 	"github.com/reproducible-containers/repro-get/pkg/distro/distroutil/detect"
 	"github.com/reproducible-containers/repro-get/pkg/distro/fedora"
@@ -30,6 +31,7 @@ var knownDistros = map[string]distro.Distro{
 	ubuntu.Name: ubuntu.New(),
 	fedora.Name: fedora.New(),
 	alpine.Name: alpine.New(),
+	arch.Name:   arch.New(),
 }
 
 func knownDistroNames() []string {
@@ -77,7 +79,7 @@ func getDistro(cmd *cobra.Command) (distro.Distro, error) {
 func newRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "repro-get",
-		Short: "Reproducible apt, dnf, and apk",
+		Short: "Reproducible apt, dnf, apk, and pacman",
 		Example: `  Generate the hash file for all the installed packages:
   $ repro-get hash generate >SHA256SUMS
 

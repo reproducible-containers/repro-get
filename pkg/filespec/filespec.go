@@ -14,6 +14,7 @@ import (
 	"github.com/reproducible-containers/repro-get/pkg/apkutil"
 	"github.com/reproducible-containers/repro-get/pkg/dpkgutil"
 	"github.com/reproducible-containers/repro-get/pkg/ioutilx"
+	"github.com/reproducible-containers/repro-get/pkg/pacmanutil"
 	"github.com/reproducible-containers/repro-get/pkg/rpmutil"
 	"github.com/reproducible-containers/repro-get/pkg/sha256sums"
 	"github.com/sirupsen/logrus"
@@ -85,18 +86,25 @@ func New(name, sha256 string, options ...Option) (*FileSpec, error) {
 			return sp, err
 		}
 		sp.APK = apk
+	case strings.HasSuffix(name, ".pkg.tar.zst"):
+		pacman, err := pacmanutil.ParseFilename(name)
+		if err != nil {
+			return sp, err
+		}
+		sp.Pacman = pacman
 	}
 	return sp, nil
 }
 
 type FileSpec struct {
-	Name     string         `json:"Name"`          // "pool/main/h/hello/hello_2.10-2_amd64.deb"
-	Basename string         `json:"Basename"`      // "hello_2.10-2_amd64.deb"
-	SHA256   string         `json:"SHA256"`        // "35b1508eeee9c1dfba798c4c04304ef0f266990f936a51f165571edf53325cbc"
-	CID      string         `json:"CID,omitempty"` // IPFS CID
-	Dpkg     *dpkgutil.Dpkg `json:"Dpkg,omitempty"`
-	RPM      *rpmutil.RPM   `json:"RPM,omitempty"`
-	APK      *apkutil.APK   `json:"APK,omitempty"`
+	Name     string             `json:"Name"`          // "pool/main/h/hello/hello_2.10-2_amd64.deb"
+	Basename string             `json:"Basename"`      // "hello_2.10-2_amd64.deb"
+	SHA256   string             `json:"SHA256"`        // "35b1508eeee9c1dfba798c4c04304ef0f266990f936a51f165571edf53325cbc"
+	CID      string             `json:"CID,omitempty"` // IPFS CID
+	Dpkg     *dpkgutil.Dpkg     `json:"Dpkg,omitempty"`
+	RPM      *rpmutil.RPM       `json:"RPM,omitempty"`
+	APK      *apkutil.APK       `json:"APK,omitempty"`
+	Pacman   *pacmanutil.Pacman `json:"Pacman,omitempty"`
 }
 
 func (sp FileSpec) URL(provider string) (*url.URL, error) {

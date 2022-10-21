@@ -63,6 +63,8 @@ func installAction(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	var installOpts distro.InstallOpts
+	installOpts := distro.InstallOpts{
+		AuxFiles: downloadRes.AuxFilesForInstallation,
+	}
 	return d.InstallPackages(ctx, cache, downloadRes.PackagesToBeInstalled, installOpts)
 }
