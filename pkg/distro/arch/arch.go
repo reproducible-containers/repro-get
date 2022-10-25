@@ -34,7 +34,6 @@ func New() distro.Distro {
 			DefaultProviders: []string{
 				"https://archive.archlinux.org/packages/{{.Name}}",
 			},
-			Experimental:                   true,
 			CacheIsNeededForGeneratingHash: true,
 		},
 	}
