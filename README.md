@@ -33,7 +33,7 @@ Setting up hello (2.10-2) ...
 | `ubuntu`                | ❌                   | ❌                             | ❌                                   |
 | `fedora` (Experimental) | ✅                   | ❌                             | ✅                                   |
 | `alpine` (Experimental) | ❌                   | ❌                             | ✅                                   |
-| `arch`   (Experimental) | ✅                   | ❌                             | ✅                                   |
+| `arch`                  | ✅                   | ✅                             | ✅                                   |
 
 <details>
 <summary> "Batteries included" for Debian, Fedora, and Arch Linux.</summary>
