@@ -3,6 +3,7 @@ package arch
 import (
 	"bufio"
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -252,8 +253,7 @@ func (d *arch) InstallPackages(ctx context.Context, c *cache.Cache, pkgs []files
 	if err != nil {
 		return err
 	}
-	args := []string{"--verify"}
-	logrus.Infof("Running '%s %s ...' with %d signatures", cmdName, strings.Join(args, " "), len(opts.AuxFiles))
+	logrus.Infof("Running '%s --verify ...' with %d signatures", cmdName, len(opts.AuxFiles))
 
 	pkgSigMap := make(map[string]string) // key: pkg basename, val: sig basename
 	for _, f := range opts.AuxFiles {
@@ -262,21 +262,22 @@ func (d *arch) InstallPackages(ctx context.Context, c *cache.Cache, pkgs []files
 		}
 		pkgSigMap[strings.TrimSuffix(f.Basename, ".sig")] = f.Basename
 		file := filepath.Join(tmpDir, f.Basename) // securejoin can't be used for symlinks; f.Basename is verified
-		args = append(args, file)
-	}
-	cmd := exec.CommandContext(ctx, cmdName, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	logrus.Debugf("Running %v", cmd.Args)
-	if err := cmd.Run(); err != nil {
-		return err
+		args := []string{"--verify", file}
+
+		cmd := exec.CommandContext(ctx, cmdName, args...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		logrus.Debugf("Running %v", cmd.Args)
+		if err := cmd.Run(); err != nil {
+			return err
+		}
 	}
 
 	cmdName, err = exec.LookPath("pacman")
 	if err != nil {
 		return err
 	}
-	args = []string{"-Uv", "--noconfirm"}
+	args := []string{"-Uv", "--noconfirm"}
 	logrus.Infof("Running '%s %s ...' with %d packages", cmdName, strings.Join(args, " "), len(pkgs))
 	for _, f := range pkgs {
 		if _, ok := pkgSigMap[f.Basename]; !ok {
@@ -285,7 +286,7 @@ func (d *arch) InstallPackages(ctx context.Context, c *cache.Cache, pkgs []files
 		file := filepath.Join(tmpDir, f.Basename) // securejoin can't be used for symlinks; f.Basename is verified
 		args = append(args, file)
 	}
-	cmd = exec.CommandContext(ctx, cmdName, args...)
+	cmd := exec.CommandContext(ctx, cmdName, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -296,6 +297,24 @@ func (d *arch) InstallPackages(ctx context.Context, c *cache.Cache, pkgs []files
 	return nil
 }
 
+var (
+	//go:embed Dockerfile.generate-hash.tmpl
+	dockerfileGenerateHashTmpl string
+
+	//go:embed Dockerfile.tmpl
+	dockerfileTmpl string
+)
+
 func (d *arch) GenerateDockerfile(ctx context.Context, dir string, args distro.DockerfileTemplateArgs, opts distro.DockerfileOpts) error {
-	return distro.ErrNotImplemented
+	if opts.GenerateHash {
+		f := filepath.Join(dir, "Dockerfile.generate-hash") // no need to use securejoin (const)
+		if err := args.WriteToFile(f, dockerfileGenerateHashTmpl); err != nil {
+			return fmt.Errorf("failed to generate %q: %w", f, err)
+		}
+	}
+	f := filepath.Join(dir, "Dockerfile") // no need to use securejoin (const)
+	if err := args.WriteToFile(f, dockerfileTmpl); err != nil {
+		return fmt.Errorf("failed to generate %q: %w", f, err)
+	}
+	return nil
 }
