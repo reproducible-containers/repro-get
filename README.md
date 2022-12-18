@@ -287,14 +287,12 @@ in `/etc/apt/sources.list`, this will cause a huge traffic on `snapshot.debian.o
 Also, as the package files are verified by checksums, existing package files are not affected by potential GPG key leakage.
 
 ### Are container images "bit-to-bit" reproducible?
-We are getting very close to bit-to-bit reproducible images, but BuildKit needs several PRs:
-- https://github.com/moby/buildkit/pull/3149 : for reproducibility of the timestamp of special directories such as `/etc`
-- https://github.com/moby/buildkit/pull/3152 : for reproducibility of the OCI annotation `org.opencontainers.image.created`
-- https://github.com/moby/buildkit/pull/2918 : for reproducibility of the timestamp values in the OCI image config
-- https://github.com/containerd/containerd/pull/7478 : for reproducibility of whiteouts
-- (And maybe more)
+Yes, with BuildKit v0.11 or later.
 
-See [`./hack/test-dockerfile-repro.sh`](./hack/test-dockerfile-repro.sh) for testing reproducibility with these BuildKit PRs.
+See [`./hack/test-dockerfile-repro.sh`](./hack/test-dockerfile-repro.sh) for testing reproducibility.
+
+However, it should be noted that the reproducibility is not guaranteed across different versions of BuildKit.
+The host operating system version, filesystem configuration, etc. may affect reproducibility too.
 
 ### Does this work with Ubuntu?
 Yes, but Ubuntu lacks an equivalent of http://snapshot.notset.fr/ , so you have to upload your cache to somewhere by yourself.

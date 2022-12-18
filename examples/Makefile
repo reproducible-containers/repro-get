@@ -1,3 +1,6 @@
+# Unexport SOURCE_DATE_EPOCH, to avoid overriding the default SOURCE_DATE_EPOCH value in Dockerfile.generate-hash .
+unexport SOURCE_DATE_EPOCH
+
 BASE_IMAGE ?= debian:bullseye-20211220
 REPRO_GET ?= $(shell command -v repro-get)
 REPRO_GET_FLAGS := --distro=debian

@@ -1,5 +1,5 @@
-# syntax = docker/dockerfile:1.4
-# ↑ for enabling `RUN --network=none`
+# syntax = docker/dockerfile-upstream:1.5.0
+# ↑ for enabling `RUN --network=none`. Removable when GitHub Actions is upgraded to use Docker 23.0.
 
 # No need to pin the digest for the test images
 ARG GOLANG_IMAGE=golang:1.19-bullseye
@@ -21,12 +21,14 @@ RUN --mount=type=cache,target=/root/.cache \
 ### Debian ###
 FROM ${DEBIAN_IMAGE} AS debian-generate-hash
 ENV DEBIAN_FRONTEND=noninteractive
+ARG SOURCE_DATE_EPOCH
 SHELL ["/bin/bash", "-c"]
 RUN --mount=type=bind,from=repro-get,src=/usr/local/bin/repro-get,dst=/usr/local/bin/repro-get \
   --mount=type=cache,target=/var/cache/repro-get \
   mkdir -p /out && \
   . /etc/os-release && \
-  SOURCE_DATE_EPOCH="$(stat --format=%Y /etc/apt/sources.list)" && \
+  : "${SOURCE_DATE_EPOCH="$(stat --format=%Y /etc/apt/sources.list)"}" && \
+  export SOURCE_DATE_EPOCH && \
   snapshot="$(printf "%(%Y%m%dT%H%M%SZ)T\n" "${SOURCE_DATE_EPOCH}")" && \
   echo "INFO: Syncing the apt cache for the snapshot at ${snapshot}" && \
   echo "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/${snapshot} ${VERSION_CODENAME} main" >/etc/apt/sources.list && \

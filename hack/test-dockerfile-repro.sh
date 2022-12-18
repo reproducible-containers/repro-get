@@ -4,6 +4,7 @@ set -eu -o pipefail
 : "${DOCKER:=docker}"
 : "${DOCKER_RUN:=${DOCKER} run}"
 
+# BuildKit needs to be v0.11 or later
 : "${BUILDCTL:=buildctl}"
 : "${BUILDCTL_BUILD:=${BUILDCTL} build}"
 
@@ -17,6 +18,8 @@ if [ $# -ne 1 ]; then
 fi
 context_dir="$1"
 
+: "${SOURCE_DATE_EPOCH:=$(git log -1 --pretty=%ct "${context_dir}")}"
+
 INFO() {
 	set +x
 	/bin/echo -e "\e[104m\e[97m[INFO]\e[49m\e[39m ${*}"
@@ -27,16 +30,21 @@ INFO "WORKSPACE: ${WORKSPACE}"
 rm -rf "${WORKSPACE}"
 mkdir -p "${WORKSPACE}"
 
+b() {
+	${BUILDCTL_BUILD} \
+		--frontend dockerfile.v0 \
+		--local dockerfile="${context_dir}" \
+		--local context="${context_dir}" \
+		--opt build-arg:SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" \
+		"$@"
+}
 INFO "===== Building 2 times ====="
 for i in 0 1; do
-	${BUILDCTL_BUILD} --no-cache --output type=tar,dest="${WORKSPACE}/${i}-raw.tar" \
-		--frontend dockerfile.v0 --local dockerfile="${context_dir}" --local context="${context_dir}"
-	${BUILDCTL_BUILD} --output type=oci,dest="${WORKSPACE}/${i}-oci.tar,annotation-manifest-descriptor.org.opencontainers.image.created=1970-01-01T00:00:00Z" \
-		--frontend dockerfile.v0 --local dockerfile="${context_dir}" --local context="${context_dir}"
+	b --no-cache --output type=tar,dest="${WORKSPACE}/${i}-raw.tar"
+	b --output type=oci,buildinfo=false,dest="${WORKSPACE}/${i}-oci.tar"
 done
 
-INFO "NOTE: Reproduction of raw tar needs https://github.com/moby/buildkit/pull/3149 to be merged"
-INFO "NOTE: Reproduction of oci tar needs https://github.com/moby/buildkit/pull/3152 , https://github.com/moby/buildkit/pull/2918 , https://github.com/containerd/containerd/pull/7478 , and maybe much more work"
+code=0
 for t in raw oci; do
 	INFO "===== Testing reproducibility of ${t} tar archives ====="
 	sha256sum "${WORKSPACE}/0-${t}.tar" "${WORKSPACE}/1-${t}.tar" | tee "${WORKSPACE}/SHA256SUMS-${t}-tar"
@@ -45,5 +53,7 @@ for t in raw oci; do
 	else
 		INFO "The ${t} tar archives DO NOT seem reproducible"
 		${DOCKER_RUN} --rm -t -w "${WORKSPACE}" -v "${WORKSPACE}:${WORKSPACE}":ro "${DIFFOSCOPE_IMAGE}" 0-${t}.tar 1-${t}.tar
+		code=1
 	fi
 done
+exit "${code}"
