@@ -7,7 +7,8 @@ set -eu -o pipefail
 : "${BUILDCTL:=buildctl}"
 : "${BUILDCTL_BUILD:=${BUILDCTL} build}"
 
-: "${DIFFOSCOPE_IMAGE:=registry.salsa.debian.org/reproducible-builds/diffoscope@sha256:e08b04b39228abc9d9a3f59004430b110d812be793cd8c682355bea2b0398a61}" # 2022-09-23
+# diffoscope can't be pinned by its hash, as the registry does not retain old versions
+: "${DIFFOSCOPE_IMAGE:=registry.salsa.debian.org/reproducible-builds/diffoscope}"
 : "${WORKSPACE:=/tmp/df-repro/$(date +%s)}"
 
 if [ $# -ne 1 ]; then
