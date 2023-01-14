@@ -13,10 +13,10 @@
 # ----------------------------------------------------------
 
 ARG BASE_IMAGE=docker.io/library/debian:bullseye-20211220@sha256:2906804d2a64e8a13a434a1a127fe3f6a28bf7cf3696be4223b06276f32f1f2d # debian:bullseye-20211220
-ARG REPRO_GET_PROVIDER=http://deb.debian.org/debian/{{.Name}},http://deb.debian.org/debian-security/{{.Name}},http://debian.notset.fr/snapshot/by-hash/SHA256/{{.SHA256}}
+ARG REPRO_GET_PROVIDER=http://deb.debian.org/debian/{{.Name}},http://deb.debian.org/debian-security/{{.Name}},http://debian.notset.fr/snapshot/by-hash/SHA256/{{.SHA256}},http://archive.debian.org/debian/{{.Name}},http://archive.debian.org/debian-security/{{.Name}}
 
-ARG REPRO_GET_VERSION=v0.1.3
-ARG REPRO_GET_SHA256SUMS_SHA256SUM=a76137fc11fd9e2675f3698179438278ca8fabf982f57cf73bd49b36df4319d3
+ARG REPRO_GET_VERSION=v0.2.1
+ARG REPRO_GET_SHA256SUMS_SHA256SUM=a8cf7888129d23f2a6d81e61e0b316b27c4b0b8432a4c4a36e0303eddab70078
 # "download" or "local"
 ARG REPRO_GET_FETCH_MODE=download
 ARG REPRO_GET_BINARY_URL=https://github.com/reproducible-containers/repro-get/releases/download/${REPRO_GET_VERSION}/repro-get-${REPRO_GET_VERSION}.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}
