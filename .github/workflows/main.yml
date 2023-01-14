@@ -24,10 +24,6 @@ jobs:
           version: v1.50.0
           args: --verbose
       - run: make integration
-      - run: make && sudo make install
-      - name: Smoke testing of 'repro-get dockerfile generate'
-        run: repro-get --distro=debian dockerfile generate . debian:bullseye-20211220 gcc build-essential
-        # TODO: run the examples with a fast, stable, and persistent file provider
   examples:
     runs-on: ubuntu-22.04
     steps:
@@ -47,3 +43,25 @@ jobs:
           docker cp buildkitd:/usr/bin/buildctl /usr/local/bin/buildctl
       - run: ./hack/test-dockerfile-repro.sh ./examples/gcc
       - run: ./hack/test-dockerfile-repro.sh ./examples/hello
+  generate:
+    runs-on: ubuntu-22.04
+    # Skip the check on the master branch, as `make generate` depends on the "latest" release on
+    # https://github.com/reproducible-containers/repro-get/releases .
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+      - uses: actions/checkout@v3
+        with:
+          # https://github.com/reproducible-containers/repro-get/issues/3
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - run: make && sudo make install
+      - run: make generate
+      - name: "Make sure that auto-generated files are kept in sync"
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo >&2 "Auto-generated files were manually modified?"
+            exit 1
+          fi
