@@ -28,3 +28,22 @@ jobs:
       - name: Smoke testing of 'repro-get dockerfile generate'
         run: repro-get --distro=debian dockerfile generate . debian:bullseye-20211220 gcc build-essential
         # TODO: run the examples with a fast, stable, and persistent file provider
+  examples:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+      - uses: actions/checkout@v3
+        with:
+          # https://github.com/reproducible-containers/repro-get/issues/3
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - run: make && sudo make install
+      - name: Start Buildkit
+        run: |
+          docker run -d --name buildkitd --privileged moby/buildkit:v0.11.0
+          echo "BUILDKIT_HOST=docker-container://buildkitd" >> $GITHUB_ENV
+          docker cp buildkitd:/usr/bin/buildctl /usr/local/bin/buildctl
+      - run: ./hack/test-dockerfile-repro.sh ./examples/gcc
+      - run: ./hack/test-dockerfile-repro.sh ./examples/hello
