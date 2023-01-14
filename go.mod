@@ -13,7 +13,7 @@ require (
 	github.com/mattn/go-isatty v0.0.16
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.1
 	gotest.tools/v3 v3.4.0
 	pault.ag/go/debian v0.12.0
 )
