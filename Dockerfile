@@ -23,3 +23,6 @@ RUN --mount=type=cache,target=/root/.cache \
 
 FROM scratch AS artifacts
 COPY --from=build-artifacts /src/_artifacts/ /
+
+FROM artifacts
+CMD ["echo", "This is an artifact-only image. Not runnable with `docker run`."]
