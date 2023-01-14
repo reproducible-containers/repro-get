@@ -94,4 +94,4 @@ artifacts-misc:
 
 .PHONY: artifacts.docker
 artifacts.docker:
-	$(DOCKER_BUILD) --output=./_artifacts -f Makefile.d/Dockerfile.artifacts .
+	$(DOCKER_BUILD) --output=./_artifacts --target=artifacts .
