@@ -90,11 +90,11 @@ func (o *URLOpener) Open(ctx context.Context, u *url.URL, sha256sum string) (io.
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to get fetcher for %v: %v: %w", dgst, ref, err)
 		}
-		r, sz, err := fetcher.(remotes.FetcherByDigest).FetchByDigest(ctx, dgst)
+		r, desc, err := fetcher.(remotes.FetcherByDigest).FetchByDigest(ctx, dgst)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to get reader for %v: %v: %w", dgst, ref, err)
 		}
-		return r, sz, nil
+		return r, desc.Size, nil
 	default:
 		return nil, 0, fmt.Errorf("unsupported URL scheme %q", u.Scheme)
 	}
