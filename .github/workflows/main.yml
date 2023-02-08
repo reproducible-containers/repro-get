@@ -57,10 +57,20 @@ jobs:
           # https://github.com/reproducible-containers/repro-get/issues/3
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-      - run: make && sudo make install
-      - run: make generate
-      - name: "Make sure that auto-generated files are kept in sync"
+      - name: "Check if Dockerfile* or Makefile* was changed"
         run: |
+          set -eux
+          git diff --name-only "origin/${GITHUB_BASE_REF}" | tee /tmp/gitdiff
+          grep -E "(Dockerfile|Makefile)" /tmp/gitdiff
+        id: gitdiff
+        continue-on-error: true
+      - name: "Make sure that auto-generated files are kept in sync"
+        if: ${{ steps.gitdiff.outcome == 'success' }}
+        run: |
+          set -eux
+          make
+          sudo make install
+          make generate
           if [ -n "$(git status --porcelain)" ]; then
             echo >&2 "Auto-generated files were manually modified?"
             exit 1
