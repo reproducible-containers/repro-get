@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.0
-	github.com/containerd/containerd v1.7.0-beta.2
+	github.com/containerd/containerd v1.7.0-beta.3
 	github.com/containerd/continuity v0.3.0
 	github.com/containerd/nerdctl v0.23.1-0.20221008120401-b4c01094b581
 	github.com/cyphar/filepath-securejoin v0.2.3
@@ -19,11 +19,11 @@ require (
 )
 
 require (
-	github.com/AdaLogics/go-fuzz-headers v0.0.0-20221206110420-d395f97c4830 // indirect
+	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230106234847-43070de90fa1 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
-	github.com/docker/cli v20.10.18+incompatible // indirect
-	github.com/docker/docker v20.10.18+incompatible // indirect
+	github.com/docker/cli v20.10.20+incompatible // indirect
+	github.com/docker/docker v20.10.20+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
