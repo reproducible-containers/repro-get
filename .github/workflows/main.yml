@@ -41,6 +41,7 @@ jobs:
           docker run -d --name buildkitd --privileged moby/buildkit:v0.11.0
           echo "BUILDKIT_HOST=docker-container://buildkitd" >> $GITHUB_ENV
           docker cp buildkitd:/usr/bin/buildctl /usr/local/bin/buildctl
+          sleep 3
       - run: ./hack/test-dockerfile-repro.sh ./examples/gcc
       - run: ./hack/test-dockerfile-repro.sh ./examples/hello
   generate:
