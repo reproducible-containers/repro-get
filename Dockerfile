@@ -1,4 +1,4 @@
-FROM golang:1.20.0-bullseye@sha256:25a48f231147f919c36afb1dca0a5f18982c484eff9fa91586a6f64365ad9dad AS build-artifacts
+FROM golang:1.20.1-bullseye@sha256:c3fbdc381fb6b78325c2a5cc1bf0c288c0d173568fba3f1b8894a51837cccf7f AS build-artifacts
 COPY . /src
 WORKDIR /src
 
