@@ -102,6 +102,8 @@ Download the latest binary release from https://github.com/reproducible-containe
 To install `repro-get` from source, install [Go](https://go.dev/dl/), run `make`, and `sudo make install`.
 The recommended version of Go is written in the [`go.mod`](./go.mod) file.
 
+The binary release can be reproduced locally by checking out the related tag and running `make artifacts.docker`.
+
 ### Installing packages with the hash file
 Create the `SHA256SUMS-amd64` file for the [`hello`](https://packages.debian.org/bullseye/amd64/hello/download) package,
 using the information from `apt-cache show hello`:
