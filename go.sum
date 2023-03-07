@@ -9,8 +9,8 @@ github.com/VividCortex/ewma v1.2.0/go.mod h1:nz4BbCtbLyFDeC9SUHbtcT5644juEuWfUAU
 github.com/cheggaaa/pb/v3 v3.1.2 h1:FIxT3ZjOj9XJl0U4o2XbEhjFfZl7jCVCDOGq1ZAB7wQ=
 github.com/cheggaaa/pb/v3 v3.1.2/go.mod h1:SNjnd0yKcW+kw0brSusraeDd5Bf1zBfxAzTL2ss3yQ4=
 github.com/containerd/cgroups v1.1.0 h1:v8rEWFl6EoqHB+swVNjVoCJE8o3jX7e8nqBGPLaDFBM=
-github.com/containerd/containerd v1.7.0-rc.0 h1:rGS4anSqNDBu1Qwv41NWlf7C2j0t/DhJCE5/5rks4cE=
-github.com/containerd/containerd v1.7.0-rc.0/go.mod h1:8pPKw+uap/Sj2ljNRdsPaToszoscMu9sPgjU8+3DU8k=
+github.com/containerd/containerd v1.7.0-rc.1 h1:Picl2mIO3fwX92iptM308gfLQ2LlxMBtulG/CrH0YC0=
+github.com/containerd/containerd v1.7.0-rc.1/go.mod h1:7MbZqMXy9721b34Q0h8E8prpPN55Zu3SKs6K4jTxYFQ=
 github.com/containerd/continuity v0.3.0 h1:nisirsYROK15TAMVukJOUyGJjz4BNQJBVsNvAXZJ/eg=
 github.com/containerd/continuity v0.3.0/go.mod h1:wJEAIwKOm/pBZuBd0JmeTvnLquTB1Ag8espWhkykbPM=
 github.com/containerd/nerdctl v1.2.0 h1:UXQw3NRxF2UUxu1ixUj+JoNGk4Nly7mapr8DgNsAozQ=
