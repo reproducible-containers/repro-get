@@ -8,7 +8,7 @@ require (
 	github.com/containerd/continuity v0.3.0
 	github.com/containerd/nerdctl v1.2.1
 	github.com/cyphar/filepath-securejoin v0.2.3
-	github.com/fatih/color v1.14.1
+	github.com/fatih/color v1.15.0
 	github.com/google/go-cmp v0.5.9
 	github.com/mattn/go-isatty v0.0.17
 	github.com/opencontainers/go-digest v1.0.0
@@ -43,7 +43,7 @@ require (
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/tools v0.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20230131230820-1c016267d619 // indirect
 	google.golang.org/grpc v1.52.3 // indirect
