@@ -8,7 +8,7 @@ require (
 	github.com/containerd/continuity v0.3.0
 	github.com/containerd/nerdctl v1.2.1
 	github.com/cyphar/filepath-securejoin v0.2.3
-	github.com/fatih/color v1.14.1
+	github.com/fatih/color v1.15.0
 	github.com/google/go-cmp v0.5.9
 	github.com/mattn/go-isatty v0.0.17
 	github.com/opencontainers/go-digest v1.0.0
