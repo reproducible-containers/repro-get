@@ -12,7 +12,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/mattn/go-isatty v0.0.19
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/sirupsen/logrus v1.9.2
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
 	gotest.tools/v3 v3.4.0
 	pault.ag/go/debian v0.12.0
