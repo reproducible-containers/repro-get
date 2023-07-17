@@ -3,7 +3,7 @@ module github.com/reproducible-containers/repro-get
 go 1.19
 
 require (
-	github.com/cheggaaa/pb/v3 v3.1.2
+	github.com/cheggaaa/pb/v3 v3.1.4
 	github.com/containerd/containerd v1.7.1
 	github.com/containerd/continuity v0.4.1
 	github.com/containerd/nerdctl v1.4.0
