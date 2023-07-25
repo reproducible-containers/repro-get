@@ -398,7 +398,7 @@ func (c *Cache) writeMetadataFiles(sha256sum string, u *url.URL, m *Metadata) er
 			return fmt.Errorf("failed to create %q: %w", metadataFileAbs, err)
 		}
 	}
-	if u != nil {
+	if u != nil && u.Scheme != "oci" && !strings.HasPrefix(u.Scheme, "oci+") {
 		revURLFileAbs, err := c.ReverseURLFileAbsPath(u)
 		if err != nil {
 			return err
@@ -432,6 +432,9 @@ func (c *Cache) MetadataBySHA256(sha256sum string) (*Metadata, error) {
 // Not always available.
 // Do not use this unless you are sure that the URL is unique.
 func (c *Cache) SHA256ByOriginURL(u *url.URL) (string, error) {
+	if u.Scheme == "oci" || strings.HasPrefix(u.Scheme, "oci+") {
+		return "", fmt.Errorf("oci URL scheme is not supported")
+	}
 	revUrlFileAbs, err := c.ReverseURLFileAbsPath(u)
 	if err != nil {
 		return "", err
