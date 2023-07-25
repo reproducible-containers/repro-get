@@ -15,7 +15,6 @@
 # ----------------------------------------------------------
 
 ARG BASE_IMAGE={{.BaseImage}} # {{.BaseImageOrig}}
-ARG REPRO_GET_PROVIDER={{join .Providers ","}}
 
 ARG REPRO_GET_VERSION={{.ReproGetVersion}}
 ARG REPRO_GET_SHA256SUMS_SHA256SUM={{.ReproGetSHASHA}}
@@ -36,7 +35,7 @@ RUN \
     : "${SOURCE_DATE_EPOCH="$(stat --format=%Y /var/log/pacman.log"}" && \
     export SOURCE_DATE_EPOCH && \
     pacman-key --init && \
-    /usr/local/bin/repro-get --provider="${REPRO_GET_PROVIDER}" --cache=/dev/.cache/repro-get install "/mnt/SHA256SUMS-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}" && \
+    /usr/local/bin/repro-get --cache=/dev/.cache/repro-get install "/mnt/SHA256SUMS-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}" && \
     : Removing web of trust private key && \
     rm -rf /etc/pacman.d/gnupg && \
     : Remove unneeded files for reproducibility && \
