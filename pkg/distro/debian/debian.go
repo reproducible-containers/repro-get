@@ -66,10 +66,10 @@ func NewUbuntu() distro.Distro {
 			Name: NameUbuntu,
 			DefaultProviders: []string{
 				// HTTPS is not used by default in the apt-get ecosystem. See also README.md.
-				"http://ports.ubuntu.com/{{.Name}}",          // multi-arch, ephemeral
-				"http://archive.ubuntu.com/ubuntu/{{.Name}}", // amd64 only, ephemeral
-				// Ubuntu has no equivalent of debian.notset.fr
-				"http://old-releases.ubuntu.com/ubuntu/{{.Name}}", // multi-arch, persistent, EOL only
+				"http://ports.ubuntu.com/{{.Name}}",                                 // multi-arch, ephemeral
+				"http://launchpad.net/ubuntu/+archive/primary/+files/{{.Basename}}", // multi-arch, persistent
+				"http://archive.ubuntu.com/ubuntu/{{.Name}}",                        // amd64 only, ephemeral
+				"http://old-releases.ubuntu.com/ubuntu/{{.Name}}",                   // multi-arch, persistent, EOL only
 			},
 		},
 	}

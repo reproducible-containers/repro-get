@@ -30,23 +30,25 @@ Setting up hello (2.10-2) ...
 | Distro                  | "Batteries included" | Support generating Dockerfiles | Support verifying package signatures |
 | ----------------------- | -------------------- | ------------------------------ | ------------------------------------ |
 | `debian`                | ✅                   | ✅                             | [❌](https://github.com/reproducible-containers/repro-get/issues/10) |
-| `ubuntu`                | ❌                   | ❌                             | ❌                                   |
+| `ubuntu`                | ✅                   | ❌                             | ❌                                   |
 | `fedora` (Experimental) | ✅                   | ❌                             | ✅                                   |
 | `alpine` (Experimental) | ❌                   | ❌                             | ✅                                   |
 | `arch`                  | ✅                   | ✅                             | ✅                                   |
 
 <details>
-<summary> "Batteries included" for Debian, Fedora, and Arch Linux.</summary>
+<summary> "Batteries included" for Debian, Ubuntu, Fedora, and Arch Linux.</summary>
 
 <p>
 
 On Debian, the packages are fetched from the following URLs by default:
-- `http://deb.debian.org/debian/{{.Name}}` for recent packages (fast, multi-arch, but ephemeral)
+- `http://deb.debian.org/debian/{{.Name}}` for recent packages (fast, but ephemeral)
 - `http://snapshot-cloudflare.debian.org/archive/debian/{{timeToDebianSnapshot .Epoch}}/{{.Name}}` for archived packages (slow, but persistent)
 
-On Fedora: `https://kojipkgs.fedoraproject.org/packages/{{.Name}}` (multi-arch and persistent)
+On Ubuntu: `http://launchpad.net/ubuntu/+archive/primary/+files/{{.Basename}}`
 
-On Arch Linux: `https://archive.archlinux.org/packages/{{.Name}}` (multi-arch and persistent)
+On Fedora: `https://kojipkgs.fedoraproject.org/packages/{{.Name}}`
+
+On Arch Linux: `https://archive.archlinux.org/packages/{{.Name}}`
 
 </p>
 
@@ -295,9 +297,6 @@ See [`./hack/test-dockerfile-repro.sh`](./hack/test-dockerfile-repro.sh) for tes
 
 However, it should be noted that the reproducibility is not guaranteed across different versions of BuildKit.
 The host operating system version, filesystem configuration, etc. may affect reproducibility too.
-
-### Does this work with Ubuntu?
-Yes, but Ubuntu lacks an equivalent of http://snapshot.notset.fr/ , so you have to upload your cache to somewhere by yourself.
 
 ### How to use HTTPS on Debian/Ubuntu?
 ```bash
