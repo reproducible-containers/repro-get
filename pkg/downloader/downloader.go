@@ -7,7 +7,7 @@ import (
 	"sort"
 
 	"github.com/fatih/color"
-	"github.com/reproducible-containers/repro-get/pkg/cache"
+	pkgcache "github.com/reproducible-containers/repro-get/pkg/cache"
 	"github.com/reproducible-containers/repro-get/pkg/distro"
 	"github.com/reproducible-containers/repro-get/pkg/filespec"
 	"github.com/sirupsen/logrus"
@@ -32,7 +32,7 @@ type Opts struct {
 	SkipInstalled bool
 }
 
-func Download(ctx context.Context, d distro.Distro, cache *cache.Cache, fileSpecs map[string]*filespec.FileSpec, opts Opts) (*Result, error) {
+func Download(ctx context.Context, d distro.Distro, cache *pkgcache.Cache, fileSpecs map[string]*filespec.FileSpec, opts Opts) (*Result, error) {
 	if d == nil {
 		return nil, errors.New("distro driver needs to be specified")
 	}
@@ -106,7 +106,10 @@ func Download(ctx context.Context, d distro.Distro, cache *cache.Cache, fileSpec
 				return nil, fmt.Errorf("failed to determine the URL of %v with the provider %q: %w", sp, provider, err)
 			}
 			printPackageStatus("Downloading from %s", u.Redacted())
-			if err = cache.Ensure(ctx, u, sp.SHA256); err != nil {
+			m := &pkgcache.Metadata{
+				Basename: sp.Basename,
+			}
+			if err = cache.Ensure(ctx, u, sp.SHA256, m); err != nil {
 				if j != len(providers)-1 {
 					logrus.WithError(err).Warnf("Failed to download %s (%s), trying the next provider", sp.Basename, u.Redacted())
 				} else {

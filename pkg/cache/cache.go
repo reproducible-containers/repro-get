@@ -6,19 +6,19 @@
 //
 //   - blobs/sha256/<SHA256>: verified blobs
 //
-//   - urls/sha256/<SHA256> : URL of the blob (optional)
+//   - metadata/sha256/<SHA256> : metadata of the blob (optional)
 //
-//   - digests/by-url-sha256/<SHA256-OF-URL> : digest of the blob (optional)
+//   - digests/by-url-sha256/<SHA256-OF-URL> : digest of the blob (optional, note that URL is not always unique)
 package cache
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -30,10 +30,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type Metadata struct {
+	Basename string
+}
+
+func ValidateMetadata(m *Metadata) error {
+	if m == nil {
+		return nil
+	}
+	if filepath.Base(m.Basename) != m.Basename {
+		return fmt.Errorf("invalid basename: %q", m.Basename)
+	}
+	return nil
+}
+
 const (
-	BlobsSHA256RelPath = "blobs/sha256"
-	URLsSHA256RelPath  = "urls/sha256"
-	ReverseURLRelPath  = "digests/by-url-sha256"
+	BlobsSHA256RelPath    = "blobs/sha256"
+	MetadataSHA256RelPath = "metadata/sha256"
+	ReverseURLRelPath     = "digests/by-url-sha256"
 )
 
 func New(dir string) (*Cache, error) {
@@ -43,7 +57,7 @@ func New(dir string) (*Cache, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
-	for _, f := range []string{BlobsSHA256RelPath, URLsSHA256RelPath, ReverseURLRelPath} {
+	for _, f := range []string{BlobsSHA256RelPath, MetadataSHA256RelPath, ReverseURLRelPath} {
 		subDir := filepath.Join(dir, f) // no need to use securejoin (const)
 		if err := os.MkdirAll(subDir, 0755); err != nil {
 			return nil, err
@@ -84,15 +98,15 @@ func (c *Cache) BlobAbsPath(sha256sum string) (string, error) {
 	return filepath.Join(c.dir, rel), nil // no need to use securejoin (rel is verified)
 }
 
-func (c *Cache) URLFileRelPath(sha256sum string) (string, error) {
+func (c *Cache) MetadataFileRelPath(sha256sum string) (string, error) {
 	if err := digest.SHA256.Validate(sha256sum); err != nil {
 		return "", err
 	}
-	return securejoin.SecureJoin(URLsSHA256RelPath, sha256sum)
+	return securejoin.SecureJoin(MetadataSHA256RelPath, sha256sum)
 }
 
-func (c *Cache) URLFileAbsPath(sha256sum string) (string, error) {
-	rel, err := c.URLFileRelPath(sha256sum)
+func (c *Cache) MetadataFileAbsPath(sha256sum string) (string, error) {
+	rel, err := c.MetadataFileRelPath(sha256sum)
 	if err != nil {
 		return "", err
 	}
@@ -127,7 +141,10 @@ func (c *Cache) Cached(sha256sum string) (bool, error) {
 	return true, nil
 }
 
-func (c *Cache) Ensure(ctx context.Context, u *url.URL, sha256sum string) error {
+func (c *Cache) Ensure(ctx context.Context, u *url.URL, sha256sum string, m *Metadata) error {
+	if err := ValidateMetadata(m); err != nil {
+		return err
+	}
 	blob, err := c.BlobAbsPath(sha256sum) // also verifies sha256sum string representation
 	if err != nil {
 		return err
@@ -183,7 +200,7 @@ func (c *Cache) Ensure(ctx context.Context, u *url.URL, sha256sum string) error 
 	if err = os.Rename(tmpW.Name(), blob); err != nil {
 		return err
 	}
-	if err := c.writeURLFiles(sha256sum, u); err != nil {
+	if err := c.writeMetadataFiles(sha256sum, u, m); err != nil {
 		return err
 	}
 	return nil
@@ -212,10 +229,10 @@ func (c *Cache) Export(dir string) (map[string]string, error) {
 		}
 		cpSrc := filepath.Join(c.dir, BlobsSHA256RelPath, sha256sum) // no need to use securejoin (sha256sum is verified)
 		basename := "UNKNOWN-" + sha256sum
-		if u, err := c.OriginURLBySHA256(sha256sum); err == nil {
-			basename = path.Base(u.Path)
+		if m, err := c.MetadataBySHA256(sha256sum); err == nil && m.Basename != "" {
+			basename = filepath.Base(m.Basename)
 		} else {
-			logrus.WithError(err).Warnf("Failed to get the origin URL of %s", sha256sum)
+			logrus.WithError(err).Warnf("Failed to get the original basename of %s", sha256sum)
 		}
 		cpDst, err := securejoin.SecureJoin(dir, basename)
 		if err != nil {
@@ -306,11 +323,14 @@ func (c *Cache) importFile(nameFull string) (sha256sum string, err error) {
 	if err != nil {
 		return "", err
 	}
-	return c.ImportWithURL(u)
+	m := &Metadata{
+		Basename: filepath.Base(nameFull),
+	}
+	return c.ImportWithURL(u, m)
 }
 
 // ImportWithReader imports from the reader.
-// Does not create the URL file.
+// Does not create the metadata files.
 func (c *Cache) ImportWithReader(r io.Reader) (sha256sum string, err error) {
 	blobsSHA256Dir := filepath.Join(c.dir, BlobsSHA256RelPath) // no need to use securejoin (const)
 	tmpW, err := os.CreateTemp(blobsSHA256Dir, ".import-*.tmp")
@@ -344,7 +364,10 @@ func (c *Cache) ImportWithReader(r io.Reader) (sha256sum string, err error) {
 	return sha256sum, nil
 }
 
-func (c *Cache) ImportWithURL(u *url.URL) (sha256sum string, err error) {
+func (c *Cache) ImportWithURL(u *url.URL, m *Metadata) (sha256sum string, err error) {
+	if err := ValidateMetadata(m); err != nil {
+		return "", err
+	}
 	r, _, err := c.urlOpener.Open(context.TODO(), u, "")
 	if err != nil {
 		return "", err
@@ -354,48 +377,64 @@ func (c *Cache) ImportWithURL(u *url.URL) (sha256sum string, err error) {
 	if err != nil {
 		return "", err
 	}
-	err = c.writeURLFiles(sha256sum, u)
+	err = c.writeMetadataFiles(sha256sum, u, m)
 	return sha256sum, err
 }
 
-// writeURLFiles writes URL files.
+// writeMetadataFiles writes metadata files and reverse URL files.
+// Note that a URL is not unique.
 // Existing files are overwritten.
-func (c *Cache) writeURLFiles(sha256sum string, u *url.URL) error {
-	urlFileAbs, err := c.URLFileAbsPath(sha256sum)
-	if err != nil {
-		return err
+func (c *Cache) writeMetadataFiles(sha256sum string, u *url.URL, m *Metadata) error {
+	if m != nil {
+		j, err := json.Marshal(m)
+		if err != nil {
+			return err
+		}
+		metadataFileAbs, err := c.MetadataFileAbsPath(sha256sum)
+		if err != nil {
+			return err
+		}
+		if err = os.WriteFile(metadataFileAbs, j, 0644); err != nil {
+			return fmt.Errorf("failed to create %q: %w", metadataFileAbs, err)
+		}
 	}
-	if err = os.WriteFile(urlFileAbs, []byte(u.Redacted()), 0644); err != nil {
-		return fmt.Errorf("failed to create %q: %w", urlFileAbs, err)
-	}
-	revURLFileAbs, err := c.ReverseURLFileAbsPath(u)
-	if err != nil {
-		return err
-	}
-	if err = os.WriteFile(revURLFileAbs, []byte("sha256:"+sha256sum), 0644); err != nil {
-		return fmt.Errorf("failed to create %q: %w", revURLFileAbs, err)
+	if u != nil && u.Scheme != "oci" && !strings.HasPrefix(u.Scheme, "oci+") {
+		revURLFileAbs, err := c.ReverseURLFileAbsPath(u)
+		if err != nil {
+			return err
+		}
+		if err = os.WriteFile(revURLFileAbs, []byte("sha256:"+sha256sum), 0644); err != nil {
+			return fmt.Errorf("failed to create %q: %w", revURLFileAbs, err)
+		}
 	}
 	return nil
 }
 
-// OriginURLBySHA256 returns the origin of the blob.
+// MetadataBySHA256 returns the metadata for the blob.
 // Not always available.
-func (c *Cache) OriginURLBySHA256(sha256sum string) (*url.URL, error) {
-	urlFileAbs, err := c.URLFileAbsPath(sha256sum)
+func (c *Cache) MetadataBySHA256(sha256sum string) (*Metadata, error) {
+	metadataFileAbs, err := c.MetadataFileAbsPath(sha256sum)
 	if err != nil {
 		return nil, err
 	}
-	b, err := os.ReadFile(urlFileAbs)
+	b, err := os.ReadFile(metadataFileAbs)
 	if err != nil {
 		return nil, err
 	}
-	s := strings.TrimSpace(string(b))
-	return url.Parse(s)
+	var m Metadata
+	if err = json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+	return &m, nil
 }
 
 // SHA256ByOriginURL returns the sha256sum by the origin URL.
 // Not always available.
+// Do not use this unless you are sure that the URL is unique.
 func (c *Cache) SHA256ByOriginURL(u *url.URL) (string, error) {
+	if u.Scheme == "oci" || strings.HasPrefix(u.Scheme, "oci+") {
+		return "", fmt.Errorf("oci URL scheme is not supported")
+	}
 	revUrlFileAbs, err := c.ReverseURLFileAbsPath(u)
 	if err != nil {
 		return "", err

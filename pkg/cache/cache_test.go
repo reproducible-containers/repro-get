@@ -142,13 +142,16 @@ func testCacheEnsure(t testing.TB, blobsBySHA256 map[string]*testBlob, newBlobUR
 	ctx := context.TODO()
 	for _, blob := range blobsBySHA256 {
 		u := newBlobURL(blob)
+		m := &Metadata{
+			Basename: filepath.Base(u.Path),
+		}
 		for i := 0; i < 2; i++ { // run twice to test idempotency
-			assert.NilError(t, cache.Ensure(ctx, u, blob.sha256))
+			assert.NilError(t, cache.Ensure(ctx, u, blob.sha256, m))
 			ok, err := cache.Cached(blob.sha256)
 			assert.NilError(t, err)
 			assert.Equal(t, true, ok)
 		}
-		assert.Check(t, cache.Ensure(ctx, u, digest.SHA256.FromString("wrong").Encoded()) != nil)
+		assert.Check(t, cache.Ensure(ctx, u, digest.SHA256.FromString("wrong").Encoded(), m) != nil)
 	}
 
 	testCacheDir(t, cache, blobsBySHA256)
@@ -211,7 +214,10 @@ func TestCacheExportImport(t *testing.T) {
 	defer testServer.Close()
 	for _, blob := range blobsBySHA256 {
 		u := testServer.basenameURL(blob)
-		assert.NilError(t, cache.Ensure(ctx, u, blob.sha256))
+		m := &Metadata{
+			Basename: filepath.Base(u.Path),
+		}
+		assert.NilError(t, cache.Ensure(ctx, u, blob.sha256, m))
 	}
 
 	mapByBasename := make(map[string]string)
