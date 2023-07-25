@@ -39,6 +39,7 @@ RUN \
   date -d "@${SOURCE_DATE_EPOCH}" '+Server = https://archive.archlinux.org/repos/%Y/%m/%d/$repo/os/$arch' > /etc/pacman.d/mirrorlist && \
   pacman -Sy && \
   mkdir -p /out && \
+  echo ${SOURCE_DATE_EPOCH} >/out/SOURCE_DATE_EPOCH && \
   /usr/local/bin/repro-get hash generate >"/out/SHA256SUMS-preinstalled" && \
   pacman -Su --noconfirm ${PACKAGES} && \
   /usr/local/bin/repro-get hash generate --dedupe "/out/SHA256SUMS-preinstalled" >"/out/SHA256SUMS-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}" && \

@@ -15,10 +15,9 @@
 # ----------------------------------------------------------
 
 ARG BASE_IMAGE=docker.io/library/debian:bullseye-20211220@sha256:2906804d2a64e8a13a434a1a127fe3f6a28bf7cf3696be4223b06276f32f1f2d # debian:bullseye-20211220
-ARG REPRO_GET_PROVIDER=http://deb.debian.org/debian/{{.Name}},http://deb.debian.org/debian-security/{{.Name}},http://debian.notset.fr/snapshot/by-hash/SHA256/{{.SHA256}},http://archive.debian.org/debian/{{.Name}},http://archive.debian.org/debian-security/{{.Name}}
 
-ARG REPRO_GET_VERSION=v0.3.0
-ARG REPRO_GET_SHA256SUMS_SHA256SUM=f9a6e19740a372e5f061985a273e46962e8a9542a1f362b8f611d5cbf807f55f
+ARG REPRO_GET_VERSION=v0.4.0
+ARG REPRO_GET_SHA256SUMS_SHA256SUM=fb1f1d32d721a1259cd58f2981e02af54136d765cb9148fecadef72e11c93bc4
 # "download" or "local"
 ARG REPRO_GET_FETCH_MODE=download
 ARG REPRO_GET_BINARY_URL=https://github.com/reproducible-containers/repro-get/releases/download/${REPRO_GET_VERSION}/repro-get-${REPRO_GET_VERSION}.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}
@@ -62,7 +61,7 @@ RUN \
     set -eux -o pipefail ; \
     : "${SOURCE_DATE_EPOCH="$(stat --format=%Y /etc/apt/sources.list)"}" && \
     export SOURCE_DATE_EPOCH && \
-    /usr/local/bin/repro-get --provider="${REPRO_GET_PROVIDER}" --cache=/dev/.cache/repro-get install "/mnt/SHA256SUMS-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}" && \
+    /usr/local/bin/repro-get --cache=/dev/.cache/repro-get install "/mnt/SHA256SUMS-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}" && \
     : Remove unneeded files for reproducibility && \
     find /var/log -name '*.log' -or -name '*.log.*' -newermt "@${SOURCE_DATE_EPOCH}" -not -type d | xargs rm -f && \
     find /run /tmp -newermt "@${SOURCE_DATE_EPOCH}" -not -type d -xdev | xargs rm -f && \

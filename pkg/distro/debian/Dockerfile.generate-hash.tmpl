@@ -53,6 +53,7 @@ RUN \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache && \
   apt-get update && \
   mkdir -p /out && \
+  echo ${SOURCE_DATE_EPOCH} >/out/SOURCE_DATE_EPOCH && \
   /usr/local/bin/repro-get hash generate >"/out/SHA256SUMS-preinstalled" && \
   apt-get install -y --no-install-recommends ${PACKAGES} && \
   /usr/local/bin/repro-get hash generate --dedupe "/out/SHA256SUMS-preinstalled" >"/out/SHA256SUMS-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}" && \
