@@ -120,7 +120,10 @@ func (d *arch) generateHash1(ctx context.Context, hw distro.HashWriter, c *cache
 		return fmt.Errorf("failed to check the cached sha256 by URL %q: %w", u.Redacted(), err)
 	}
 	logrus.Debugf("%q: downloading from %q", basename, u.Redacted())
-	sha256sum, err := c.ImportWithURL(u)
+	m := &cache.Metadata{
+		Basename: basename,
+	}
+	sha256sum, err := c.ImportWithURL(u, m)
 	if err != nil {
 		return err
 	}
