@@ -103,7 +103,7 @@ func Download(ctx context.Context, d distro.Distro, cache *cache.Cache, fileSpec
 		for j, provider := range providers {
 			u, err := sp.URL(provider)
 			if err != nil {
-				return nil, fmt.Errorf("failed to determine the URL of %v with the provider %q", sp, provider)
+				return nil, fmt.Errorf("failed to determine the URL of %v with the provider %q: %w", sp, provider, err)
 			}
 			printPackageStatus("Downloading from %s", u.Redacted())
 			if err = cache.Ensure(ctx, u, sp.SHA256); err != nil {
