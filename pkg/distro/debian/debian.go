@@ -34,11 +34,26 @@ func New() distro.Distro {
 			Name: NameDebian,
 			DefaultProviders: []string{
 				// HTTPS is not used by default in the apt-get ecosystem. See also README.md.
-				"http://deb.debian.org/debian/{{.Name}}",                      // fast, multi-arch, ephemeral
-				"http://deb.debian.org/debian-security/{{.Name}}",             // fast, multi-arch, ephemeral
-				"http://debian.notset.fr/snapshot/by-hash/SHA256/{{.SHA256}}", // slow, amd64 only, persistent
-				"http://archive.debian.org/debian/{{.Name}}",                  // multi-arch, persistent, EOL only
-				"http://archive.debian.org/debian-security/{{.Name}}",         // multi-arch, persistent, EOL only
+				//
+				// deb.debian.org: multi-arch, ephemeral
+				"http://deb.debian.org/debian/{{.Name}}",
+				"http://deb.debian.org/debian-security/{{.Name}}",
+				//
+				// snapshot-cloudflare.debian.org: multi-arch, persistent, slow, experimental (?)
+				"http://snapshot-cloudflare.debian.org/archive/debian/{{timeToDebianSnapshot .Epoch}}/{{.Name}}",
+				"http://snapshot-cloudflare.debian.org/archive/debian-security/{{timeToDebianSnapshot .Epoch}}/{{.Name}}",
+				//
+				// snapshot.debian.org: multi-arch, persistent, very slow
+				"http://snapshot.debian.org/archive/debian/{{timeToDebianSnapshot .Epoch}}/{{.Name}}",
+				"http://snapshot.debian.org/archive/debian-security/{{timeToDebianSnapshot .Epoch}}/{{.Name}}",
+				//
+				// archive.debian.org: multi-arch, persistent, EOL only
+				"http://archive.debian.org/debian/{{.Name}}",
+				"http://archive.debian.org/debian-security/{{.Name}}",
+				//
+				// debian.notset.fr: slow and amd64 only, but accessible by SHA256
+				// Down as of June 2023: https://github.com/fepitre/debian-snapshot/issues/20
+				"http://debian.notset.fr/snapshot/by-hash/SHA256/{{.SHA256}}",
 			},
 		},
 	}
