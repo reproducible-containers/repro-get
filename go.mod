@@ -15,7 +15,7 @@ require (
 	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/cobra v1.7.0
 	gotest.tools/v3 v3.4.0
-	pault.ag/go/debian v0.12.0
+	pault.ag/go/debian v0.15.0
 )
 
 require (
