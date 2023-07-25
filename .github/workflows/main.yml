@@ -42,8 +42,7 @@ jobs:
           echo "BUILDKIT_HOST=docker-container://buildkitd" >> $GITHUB_ENV
           docker cp buildkitd:/usr/bin/buildctl /usr/local/bin/buildctl
           sleep 3
-      # Temporarily broken, as debian.notset.fr is down
-      # - run: ./hack/test-dockerfile-repro.sh ./examples/gcc
+      - run: ./hack/test-dockerfile-repro.sh ./examples/gcc
       - run: ./hack/test-dockerfile-repro.sh ./examples/hello
   generate:
     runs-on: ubuntu-22.04
