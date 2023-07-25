@@ -18,7 +18,7 @@ if [ $# -ne 1 ]; then
 fi
 context_dir="$1"
 
-: "${SOURCE_DATE_EPOCH:=$(git log -1 --pretty=%ct "${context_dir}")}"
+: "${SOURCE_DATE_EPOCH:=$(cat "${context_dir}/SOURCE_DATE_EPOCH")}"
 
 INFO() {
 	set +x

@@ -22,8 +22,8 @@ ARG SNAPSHOT_ARCHIVE_BASE=http://snapshot.debian.org/archive/
 # Backports do not seem cached in https://debian.notset.fr/
 ARG BACKPORTS=0
 
-ARG REPRO_GET_VERSION=v0.3.0
-ARG REPRO_GET_SHA256SUMS_SHA256SUM=f9a6e19740a372e5f061985a273e46962e8a9542a1f362b8f611d5cbf807f55f
+ARG REPRO_GET_VERSION=v0.4.0
+ARG REPRO_GET_SHA256SUMS_SHA256SUM=fb1f1d32d721a1259cd58f2981e02af54136d765cb9148fecadef72e11c93bc4
 # "download" or "local"
 ARG REPRO_GET_FETCH_MODE=download
 ARG REPRO_GET_BINARY_URL=https://github.com/reproducible-containers/repro-get/releases/download/${REPRO_GET_VERSION}/repro-get-${REPRO_GET_VERSION}.linux-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}
@@ -80,6 +80,7 @@ RUN \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache && \
   apt-get update && \
   mkdir -p /out && \
+  echo ${SOURCE_DATE_EPOCH} >/out/SOURCE_DATE_EPOCH && \
   /usr/local/bin/repro-get hash generate >"/out/SHA256SUMS-preinstalled" && \
   apt-get install -y --no-install-recommends ${PACKAGES} && \
   /usr/local/bin/repro-get hash generate --dedupe "/out/SHA256SUMS-preinstalled" >"/out/SHA256SUMS-${TARGETARCH}${TARGETVARIANT:+-${TARGETVARIANT}}" && \
