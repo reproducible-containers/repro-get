@@ -4,9 +4,9 @@ go 1.19
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.4
-	github.com/containerd/containerd v1.7.2
+	github.com/containerd/containerd v1.7.3
 	github.com/containerd/continuity v0.4.1
-	github.com/containerd/nerdctl v1.4.0
+	github.com/containerd/nerdctl v1.5.0
 	github.com/cyphar/filepath-securejoin v0.2.3
 	github.com/fatih/color v1.15.0
 	github.com/google/go-cmp v0.5.9
