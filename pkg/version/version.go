@@ -59,7 +59,7 @@ func DetectDownloadable(ctx context.Context, version string) (*Downloadable, err
 		// NOP
 	}
 
-	if !strings.HasPrefix(version, "v") || strings.Contains(version, "-g") || strings.HasSuffix(version, ".m") {
+	if !strings.HasPrefix(version, "v") || strings.Contains(version, "-g") || strings.HasSuffix(version, ".m") || len(version) > 30 {
 		return nil, fmt.Errorf("non-downloadable version: %q", version)
 	}
 	d := &Downloadable{
@@ -134,8 +134,16 @@ func GetVersion() string {
 	if !ok {
 		return unknown
 	}
-	// bi.Main.Version is always "(devel)" as of Go 1.19, but will change in the future:
-	// https://github.com/golang/go/issues/50603#issuecomment-1076662671
+	/*
+	 * go install example.com/cmd/foo@vX.Y.Z: bi.Main.Version="vX.Y.Z",                               vcs.revision is unset
+	 * go install example.com/cmd/foo@latest: bi.Main.Version="vX.Y.Z",                               vcs.revision is unset
+	 * go install example.com/cmd/foo@master: bi.Main.Version="vX.Y.Z-N.yyyyMMddhhmmss-gggggggggggg", vcs.revision is unset
+	 * go install ./cmd/foo:                  bi.Main.Version="(devel)", vcs.revision="gggggggggggggggggggggggggggggggggggggggg"
+	 *                                        vcs.time="yyyy-MM-ddThh:mm:ssZ", vcs.modified=("false"|"true")
+	 */
+	if bi.Main.Version != "" && bi.Main.Version != "(devel)" {
+		return bi.Main.Version
+	}
 	var (
 		vcsRevision string
 		vcsTime     string
