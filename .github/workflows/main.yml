@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: 1.19.x
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # https://github.com/reproducible-containers/repro-get/issues/3
           fetch-depth: 0
@@ -30,7 +30,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: 1.19.x
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # https://github.com/reproducible-containers/repro-get/issues/3
           fetch-depth: 0
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: 1.19.x
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # https://github.com/reproducible-containers/repro-get/issues/3
           fetch-depth: 0
