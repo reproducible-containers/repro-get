@@ -42,7 +42,9 @@ RUN \
   set -eux -o pipefail; \
   . /etc/os-release && \
   export DEBIAN_FRONTEND=noninteractive && \
-  : "${SOURCE_DATE_EPOCH="$(stat --format=%Y /etc/apt/sources.list)"}" && \
+  sources_list="/etc/apt/sources.list" && \
+  if [ -e /etc/apt/sources.list.d/debian.sources ]; then sources_list=/etc/apt/sources.list.d/debian.sources; fi && \
+  : "${SOURCE_DATE_EPOCH="$(stat --format=%Y "${sources_list}")"}" && \
   export SOURCE_DATE_EPOCH && \
   snapshot="$(printf "%(%Y%m%dT%H%M%SZ)T\n" "${SOURCE_DATE_EPOCH}")" && \
   echo "deb [check-valid-until=no] ${SNAPSHOT_ARCHIVE_BASE}debian/${snapshot} ${VERSION_CODENAME} main" >/etc/apt/sources.list && \
