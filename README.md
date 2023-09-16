@@ -1,3 +1,18 @@
+# :warning: Soft-deprecated
+
+`repro-get` is soft-deprecated due to its complexity.
+
+Consider switching to the following alternatives:
+
+|Project                                                           |Cache location                           |Best for                             |
+|------------------------------------------------------------------|-----------------------------------------|-------------------------------------|
+|<https://github.com/reproducible-containers/repro-sources-list.sh>|Distros' permanent snapshot servers (*\1)|Debian, Ubuntu, ArchLinux            |
+|<https://github.com/reproducible-containers/repro-pkg-cache>      |Your own permanent image registry        |Alpine, Fedora, Rocky, openSUSE, etc.|
+
+(\*1): The packages can be also ephemerally cached on GitHub Actions to reduce loads on distros' snapshot servers.
+See <https://github.com/reproducible-containers/buildkit-cache-dance>.
+
+- - -
 [[⬇️ **Download]**](https://github.com/reproducible-containers/repro-get/releases)
 [[📖 **Quick start]**](#quick-start)
 [[❓**FAQs & Troubleshooting]**](#faqs)
