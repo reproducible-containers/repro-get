@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.4
-	github.com/containerd/containerd v1.7.5
+	github.com/containerd/containerd v1.7.6
 	github.com/containerd/continuity v0.4.2
 	github.com/containerd/nerdctl v1.5.0
 	github.com/cyphar/filepath-securejoin v0.2.4
@@ -21,6 +21,7 @@ require (
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/Microsoft/hcsshim v0.11.0 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/docker/cli v24.0.5+incompatible // indirect
 	github.com/docker/docker v24.0.5+incompatible // indirect
