@@ -9,7 +9,7 @@ require (
 	github.com/containerd/nerdctl v1.5.0
 	github.com/cyphar/filepath-securejoin v0.2.4
 	github.com/fatih/color v1.15.0
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/mattn/go-isatty v0.0.19
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/sirupsen/logrus v1.9.3
