@@ -10,7 +10,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.4
 	github.com/fatih/color v1.15.0
 	github.com/google/go-cmp v0.5.9
-	github.com/mattn/go-isatty v0.0.19
+	github.com/mattn/go-isatty v0.0.20
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
