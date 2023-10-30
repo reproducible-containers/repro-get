@@ -23,7 +23,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/docker/cli v24.0.5+incompatible // indirect
-	github.com/docker/docker v24.0.5+incompatible // indirect
+	github.com/docker/docker v24.0.7+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.0 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
